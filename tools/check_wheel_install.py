@@ -14,68 +14,24 @@ import sys
 from tempfile import TemporaryDirectory
 import tomllib
 
-PROBE = '''
+CONSUMER_CHECKS = '''
 from importlib import metadata
 from pathlib import Path
 import platform
 import sys
 import framework
-from framework.adapters.mock_robot import ReadOnlyMockBackend
-from framework.application.registry import RobotRegistry
-from framework.domain.capabilities import CapabilityInputs, UnavailableReason
-from framework.domain.discovery import (
-    BackendDescription, BackendIdentity, BackendKind, BackendState, MotionState, ReadOnlyObservation,
-)
-from framework.adapters.clocks import ManualMonotonicClock, SystemMonotonicClock
-from framework.application.ports import MonotonicClock
-from framework.domain.time import MonotonicInstant, ClockDomainMismatch
-from framework.domain.geometry import Quaternion, RigidTransform
-from framework.domain.targets import PoseGoal
-from framework.domain.values import DeviceId, FrameId, RobotId, ToolId, Vector3, mm_to_m
 names = {item.metadata['Name'].casefold() for item in metadata.distributions()}
 assert names == {'bot3d-kernel'}, names
 assert metadata.version('bot3d-kernel') == sys.argv[1]
 assert not metadata.requires('bot3d-kernel')
 assert Path(framework.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
-clock = ManualMonotonicClock(clock_id='clean-consumer')
-start = clock.now()
-clock.advance_ns(9)
-assert clock.now().elapsed_ns_since(start) == 9
-assert isinstance(SystemMonotonicClock().now(), MonotonicInstant)
-try:
-    start.elapsed_ns_since(MonotonicInstant('other-clock', 0))
-except ClockDomainMismatch:
-    pass
-else:
-    raise AssertionError('cross-clock arithmetic accepted')
-base = FrameId('arm-fixture/base')
-world = FrameId('cell/world')
-robot = RobotId('arm-fixture')
-tool = ToolId('tool0')
-identity = Quaternion.from_xyzw([0, 0, 0, 1])
-goal = PoseGoal(robot, base, tool, Vector3(mm_to_m(1000), 0, 0), identity)
-moved = goal.transformed(RigidTransform(world, base, Vector3(1, 2, 3), identity))
-assert (moved.robot_id, moved.frame_id, moved.tool_id) == (robot, world, tool)
-assert moved.position_m.as_tuple() == (2.0, 2.0, 3.0)
-assert moved.orientation_xyzw == identity
-assert goal.frame_id == base
-assert sys.version_info[:2] == (3, 12)
-backend = BackendIdentity(DeviceId('mock-device-a'), 'mock-backend-a', BackendKind.SIM, 'fixture-epoch-a')
-inputs = CapabilityInputs(True, True, True, True, True, 'fixture-config-1', None)
-unknown = ReadOnlyObservation(None, MotionState.UNKNOWN, None, None)
-mock = ReadOnlyMockBackend(BackendDescription(backend, 'Fixture arm', inputs), BackendState(backend, unknown))
-registry = RobotRegistry()
-registered = registry.register(robot, mock)
-assert registry.discover() == (registered,)
-state = registry.read_state(robot)
-assert registered.binding.robot_id == robot and registered.binding.backend == backend
-assert state.binding == registered.binding and state.observation == unknown
-assert state.capability_revision == registered.capabilities.revision == 1
-assert registered.capabilities.pose_goal.available is False
-assert registered.capabilities.pose_goal.reasons == (UnavailableReason.EXECUTION_UNAVAILABLE,)
+'''
+
+CONSUMER_REPORT = '''
 print('PASS: clean wheel consumer; only bot3d-kernel installed; no source path or runtime dependencies.')
 print('PASS: typed goal and framed transform work in the clean consumer.')
 print('PASS: read-only registry preserves mock identity and unknown feedback.')
+print('PASS: a synthetic session acquires, activates, and expires within its scoped authority.')
 print('INFO: consumer Python ' + platform.python_version() + '; no device connection.')
 '''
 
@@ -115,6 +71,7 @@ def main() -> int:
         return 1
     version = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version']
     try:
+        probe = (root / 'tools/installed_api_probe.py').read_text(encoding='utf-8')
         with TemporaryDirectory(prefix='kernel-wheel-check-') as directory:
             temporary = Path(directory)
             environment = temporary / 'consumer'
@@ -123,7 +80,8 @@ def main() -> int:
             executable = environment / ('Scripts/python.exe' if sys.platform == 'win32' else 'bin/python')
             run([uv, 'pip', 'install', '--offline', '--no-index', '--no-deps',
                  '--python', str(executable), str(wheel)], temporary)
-            run([str(executable), '-I', '-c', PROBE, version], temporary)
+            code = CONSUMER_CHECKS + probe + CONSUMER_REPORT
+            run([str(executable), '-I', '-c', code, version], temporary)
     except (OSError, RuntimeError) as exc:
         print(f'FAIL: {exc}')
         return 1

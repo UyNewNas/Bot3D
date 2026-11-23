@@ -2,7 +2,7 @@
 
 - 日期：2026-11-20
 - 工作包：DEV-M1-02；I01 的最小工程切片
-- 当前边界：已验证 Python 包、时钟、基础领域值、能力组合与只读 Registry；最新十个切片与独立安装复验见 [AR-0015](../project/records/AR-0015-readonly-registry-batch-final.md)，依赖检查补漏见 [AR-0007](../project/records/AR-0007-foundation-boundary-recheck.md)，原 Windows 基线见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)
+- 当前边界：已验证 Python 包、时钟、基础类型、只读 Registry 与控制权；最新十四个切片及独立安装复验见 [AR-0020](../project/records/AR-0020-control-authority-final.md)，依赖检查补漏见 [AR-0007](../project/records/AR-0007-foundation-boundary-recheck.md)，原 Windows 基线见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)
 - 关联：[运行时详细设计](05-runtime-coordination.md)、[基础类型与坐标数学](07-domain-types-and-geometry.md)、[项目入口](../project/README.md)、[仓库运行说明](../../README.md)
 
 ## 1. 版本决策
@@ -23,16 +23,17 @@
 
 ## 2. 最小布局与依赖方向
 
-分发名为 bot3d-kernel，导入名为 framework，沿用架构的 src/framework 建议。只创建实际使用的模块；Registry 与只读端口已有实现，网关、规划 / 执行端口、Journal、数据库和 bootstrap 按后续任务建立。
+分发名为 bot3d-kernel，导入名为 framework，沿用架构的 src/framework 建议。只创建实际使用的模块；Registry、只读端口与独立控制权管理器已有实现，网关、规划 / 执行端口、Journal、数据库和 bootstrap 按后续任务建立。
 
 - [领域时间值](../../src/framework/domain/time.py)：冻结的 MonotonicInstant 与跨时钟错误；只依赖 dataclasses。
 - [标识与 SI 值](../../src/framework/domain/values.py)、[坐标数学](../../src/framework/domain/geometry.py)、[位姿目标](../../src/framework/domain/targets.py)：DEV-M1-03 的不可变值与纯数学；具体 API、方向和数值边界见[专题设计](07-domain-types-and-geometry.md)。
 - [能力组合](../../src/framework/domain/capabilities.py)与[只读数据](../../src/framework/domain/discovery.py)：DEV-M1-04 的能力版本、原因、身份和最小观测切片，接口见[专题设计](08-readonly-registry-and-capabilities.md)。
 - [应用读取端口](../../src/framework/application/ports.py)：MonotonicClock 只有 now()，ReadOnlyBackend 只有 describe() / read_state()；都返回普通领域值，不携带 HTTP DTO、SDK / ROS 对象。
 - [只读 Registry](../../src/framework/application/registry.py)：同步内存注册、发现、身份一致性检查和每绑定能力版本；不暴露控制句柄。
+- [控制权领域值](../../src/framework/domain/control.py)与[控制权管理器](../../src/framework/application/control_authority.py)：会话授权登记、租约、显式激活、失权事件、上下文退役与聚合未结执行标记，接口见[专题设计](09-control-authority-and-activation.md)。应用层用短 Lock 串行化许可转换；不调用执行或 STOP。
 - [时钟适配器](../../src/framework/adapters/clocks.py)：SystemMonotonicClock 与明确注入的 ManualMonotonicClock；不启动服务或设备连接。
 - [只读 SIM mock](../../src/framework/adapters/mock_robot.py)：固定身份与观测样例，执行前提固定为 False，无外部连接或控制入口。
-- [单元测试](../../tests/)：T26 三个工程切片、T28 三个类型 / 数学切片，以及 T29 / T46 四个能力 / 只读切片；fixture 按函数创建，无全局共享时钟。
+- [单元测试](../../tests/)：T26 三个工程切片、T28 三个类型 / 数学切片、T29 / T46 四个能力 / 只读切片，以及 T01 / T07 / T30 / T42 四个控制权切片；fixture 按函数创建，无全局共享时钟。
 - [依赖检查器](../../tools/check_import_boundaries.py)：只读 AST 检查，核心为 root / domain / application；适配层可向内，不被内核反向导入。
 - [独立 wheel 消费者检查](../../tools/check_wheel_install.py)：仓库外临时空 venv、无 pip / pytest、离线安装本地 wheel，再用 -I 导入与探测；未构建时不能运行成功。
 
@@ -94,7 +95,11 @@ uv run --offline --no-sync python -I tools/check_runtime_design.py
 | T29/revision | 初值、等价读、原因 / 配置 / 模式变化、A→B→A 与不可变快照 | 不推断后端未声明的配置变化 |
 | T46/discovery | 注册 / 描述 / 状态、完整身份漂移拒绝、镜像独立版本、重复与失败不覆盖 | 不证明运行时 epoch 轮转、设备核验或持久化 |
 | T46/readonly | mock 与 Registry 都无执行能力、子类边界、未知 / 空观测、零控制调用 | 不证明真实停车或完整 StateProjection |
+| T01/leases | 设备可写唯一、会话 / 租约身份、线程竞争、续期和旧令牌拒绝 | 不提供跨进程锁或设备 fencing |
+| T07/authority-loss | 会话撤销、失权效果、迟到请求、聚合执行锁与处置后重新获权 | 不执行物理停止，不证明全部执行原因已关闭 |
+| T30/activation | 显式确认、连续 / 停车前提分离、健康运动续租、上下文退役 | 不提供真实认证或反馈资格判定 |
+| T42/lease-clock | 半开到期、来源钟隔离、故障时全部撤权与保护入口 | 命令期限 / 执行预算留后续用例 |
 
-I01 十个切片的最新结果见 [AR-0015](../project/records/AR-0015-readonly-registry-batch-final.md)。基础类型和只读 Registry 分别见[类型设计](07-domain-types-and-geometry.md)与[能力 / 发现设计](08-readonly-registry-and-capabilities.md)；产品验收仍为 PENDING。
+I01 十个切片保留回归，I02 新增四个控制权切片；全量与工程结果见 [AR-0020](../project/records/AR-0020-control-authority-final.md)。基础类型、只读 Registry 和控制权分别见[类型设计](07-domain-types-and-geometry.md)、[能力 / 发现设计](08-readonly-registry-and-capabilities.md)与[控制权设计](09-control-authority-and-activation.md)；产品验收仍为 PENDING。
 
 设计取舍：时钟端口只保留必要操作，不为未来命令类型预造 Planner / Backend 签名；人工钟显式位于适配层、不进领域；无运行第三方依赖；pytest 仅为开发依赖。各次独立代码复核见对应 AR，产品验收角色仍待指定。本轮不增加公共命令状态，不降低已有 AC。

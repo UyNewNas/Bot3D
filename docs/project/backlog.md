@@ -1,9 +1,9 @@
 # 开发台账
 
 - 更新日期：2026-11-23
-- 当前状态：14 项 TODO、4 项 DONE、13 项 DRAFT、2 项 DEFERRED
+- 当前状态：13 项 TODO、5 项 DONE、13 项 DRAFT、2 项 DEFERRED
 - 权威范围：本文件维护开发交付物、依赖和开发状态；需求与测试映射只维护在[追踪矩阵](requirements.md)
-- 当前选择：[I01](iterations/I01-M1-foundation.md)；DEV-M1-01—DEV-M1-04 已 DONE，十个技术切片齐备，见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)；迭代 IN_ACCEPTANCE，产品验收 PENDING
+- 当前选择：[I02](iterations/I02-M1-control-loop.md)；DEV-M1-05 已完成，最终记录见 [AR-0020](records/AR-0020-control-authority-final.md)，下一工作包为 DEV-M1-06。[I01](iterations/I01-M1-foundation.md) 仍 IN_ACCEPTANCE，产品验收 PENDING
 
 ## 1. 使用规则
 
@@ -23,7 +23,7 @@ M1 不依赖 ROS、Gazebo、Unity 或厂商 SDK。普通领域类型与端口保
 | DEV-M1-02 | DONE | 已交付最小 Python 工程、纯领域 / 应用端口、可控单调时钟与测试基础。[工程基线](../design/06-python-foundation.md)固定 Python 3.12.11、开发依赖和复现命令，包安装 / 导入与依赖边界见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md) | DEV-M1-01 |
 | DEV-M1-03 | DONE | 已交付[标识 / SI 值、四元数 / 刚体变换与带工具目标](../design/07-domain-types-and-geometry.md)；三个 T28 切片使用独立基准点、轴、姿态和非法值断言，拒绝缺失与非法值，不填默认反馈；数值边界修正与工程回归见 [AR-0011](records/AR-0011-domain-foundation-final.md) | DEV-M1-02 |
 | DEV-M1-04 | DONE | 已交付[能力组合 / 版本、不可变身份 / 观测、只读 Registry 与 SIM mock](../design/08-readonly-registry-and-capabilities.md)；T29 / T46 四个切片通过，共享设备镜像保留独立版本，身份漂移拒绝；缺失反馈保持未知且只读对象没有执行能力。证据见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md) | DEV-M1-03 |
-| DEV-M1-05 | TODO | 实现单写租约、显式激活与前置策略；租约绑定会话 / robot / epoch，按单调时钟续期 / 到期；READY、ARMED、运动状态分开；失权事件可进入停止用例，未结执行未处置时不能发放可执行控制流 | DEV-M1-04 |
+| DEV-M1-05 | DONE | 实现单写租约、显式激活与前置策略；租约绑定会话 / robot / epoch，按单调时钟续期 / 到期；READY、ARMED、运动状态分开；失权事件可进入停止用例，未结执行未处置时不能发放可执行控制流 | DEV-M1-04 |
 | DEV-M1-06 | TODO | 实现 JournalPort、执行语义规范化摘要与内存测试替身；键为 robot_id＋command_id，request_id 不入摘要；覆盖同键重试和异摘要冲突；明确保留窗口接口，不把内存结果称为持久化保证 | DEV-M1-03 |
 | DEV-M1-07 | TODO | 实现可控 Planner / Backend mock：计划、执行、原句柄查询、绑定级停止、反馈与可统计调用；注入拒绝、延迟、响应丢失与仍在运动；Planner 不自行执行，mock 不建立外部设备连接 | DEV-M1-04、DEV-M1-06 |
 | DEV-M1-08 | TODO | 实现单机器人串行协调正常链路：规划也占唯一槽、接受后规划、前提复核、意图后下发、服务端 ResolvedExecution；无隐式运动队列；外部调用结果返回协调序列处理。与停止链联调完成前不宣称闭环可用 | DEV-M1-05、DEV-M1-06、DEV-M1-07、DEV-M1-12 |
@@ -44,7 +44,7 @@ M1 不依赖 ROS、Gazebo、Unity 或厂商 SDK。普通领域类型与端口保
 - I02：DEV-M1-05—DEV-M1-09、DEV-M1-12，先完成状态投影与测试替身，再接执行和停止；未通过停止与最终下发竞态，不关闭执行切片。
 - I03：DEV-M1-10、DEV-M1-11、DEV-M1-13—DEV-M1-18，持久化、恢复、上下文、切换、事件、背压与运行边界。
 
-以上不是任务的实际执行顺序；按“前置开发”拓扑顺序选择。I02 / I03 尚未建立正式迭代文件，开始前按[验收规则](acceptance.md)锁定当轮范围。
+以上不是任务的实际执行顺序；按“前置开发”拓扑顺序选择。I02 已建立[正式迭代文件](iterations/I02-M1-control-loop.md)与最低验收清单；I03 仍为建议分配，开始前按[验收规则](acceptance.md)锁定当轮范围。
 
 ## 3. M2—M5 与扩展工作包
 
@@ -70,4 +70,4 @@ M1 不依赖 ROS、Gazebo、Unity 或厂商 SDK。普通领域类型与端口保
 
 ## 4. 本轮交接
 
-DEV-M1-01 的详细设计与 DOC 检查见 [AR-0003](records/AR-0003-runtime-design.md)。DEV-M1-02 的依赖边界修正见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md)。DEV-M1-03 基础类型及最新 T26 / T28 复验见 [AR-0011](records/AR-0011-domain-foundation-final.md)。DEV-M1-04 的能力组合与只读发现已交付，最新十个切片和工程回归见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。I01 为 IN_ACCEPTANCE，产品验收 PENDING；下一轮先锁定 I02，再从 DEV-M1-05 推进。
+DEV-M1-01 的详细设计与 DOC 检查见 [AR-0003](records/AR-0003-runtime-design.md)。DEV-M1-02 的依赖边界修正见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md)。DEV-M1-03 基础类型见 [AR-0011](records/AR-0011-domain-foundation-final.md)，DEV-M1-04 的能力组合与只读发现见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。DEV-M1-05 控制权已完成，十四个切片与工程回归见 [AR-0020](records/AR-0020-control-authority-final.md)。I01 为 IN_ACCEPTANCE，I02 ACTIVE，产品验收 PENDING；下一工作包为 DEV-M1-06。
