@@ -2,7 +2,7 @@
 
 - 更新日期：2026-11-23
 - 基线：v0.1 设计草案；本台账把设计转为待实现、待验证的需求，不表示用户已逐项签收
-- 当前状态：14 项 READY、7 项 DEVELOPING、13 项 DRAFT、2 项 DEFERRED；没有 ACCEPTED 项
+- 当前状态：13 项 READY、8 项 DEVELOPING、13 项 DRAFT、2 项 DEFERRED；没有 ACCEPTED 项
 - 流程与状态：[项目入口](README.md)；开发状态见[开发台账](backlog.md)，实际结果只见[验收记录](acceptance.md)
 
 ## 1. 读法与范围
@@ -19,7 +19,7 @@
 | --- | --- | --- | --- | --- | --- |
 | REQ-001 | P0 | DEVELOPING | 最小工程与依赖向内 | AC-001：纯领域和端口不导入 ROS、引擎、厂商 SDK、HTTP、Pydantic 或 ORM；最小工程、测试命令与依赖边界检查可复现；只创建当期必要模块 | P §2（P2、P7）、§3；A §2、§11 |
 | REQ-002 | P0 | DEVELOPING | 身份、绑定与代次 | AC-002：逻辑 robot_id 与核验的 device_id 分开；同设备只有一个可写绑定；只读镜像不持有执行端口；绑定、重连、重启和关键上下文失效产生不可复用 epoch，旧命令和旧反馈不能改变新绑定；epoch 不冒充设备 fencing | A §7、§8；C §2 |
-| REQ-003 | P0 | READY | 有效能力组合 | AC-003：对外能力由规划、模型、坐标、策略及执行支持共同计算；缺任一前提时不宣称 pose_goal 可用；能力变化更新版本并给出原因，不写品牌分支猜测能力 | A §3；C §3 |
+| REQ-003 | P0 | DEVELOPING | 有效能力组合 | AC-003：对外能力由规划、模型、坐标、策略及执行支持共同计算；缺任一前提时不宣称 pose_goal 可用；能力变化更新版本并给出原因，不写品牌分支猜测能力 | A §3；C §3 |
 | REQ-004 | P0 | DEVELOPING | 目标、约束与参数验证 | AC-004：目标有作用域 frame、工具和 SI 单位；拒绝非有限数、错误维度、无效四元数及越界目标或约束；工具、速度和容差受配置限制，不能放大容差绕过完成判据 | C §4、§5、§12 |
 | REQ-005 | P0 | READY | 单写租约 | AC-005：租约绑定已认证会话、机器人和 epoch；并发只授一个持有者；续租、释放、到期及失权以单调时间处理；失权阻止新运动并停止现有任务，停车和未结执行处置前不授予可执行的新控制流 | A §3、§6；C §7 |
 | REQ-006 | P0 | READY | 显式激活 | AC-006：READY、持有租约、ARMED 与物理运动状态分开；启动和新绑定默认 DISARMED；激活检查前提；STOP、失租约、超时及关键故障取消激活；停车确认或重连不自动激活 | C §6、§7 |
@@ -108,4 +108,6 @@
 
 REQ-001 和 REQ-007 在工程基础复验后恢复 DEVELOPING。REQ-001 获得最小工程和依赖方向的 UNIT 证据，REQ-007 获得时钟端口及隔离的基础证据。后续工作和必验闸门见上表，实际记录见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md)。
 
-REQ-002、REQ-004 和 REQ-016 已获得基础标识、带工具目标 / 数值校验和坐标数学的 UNIT 证据，见 [AR-0011](records/AR-0011-domain-foundation-final.md)。状态保持 DEVELOPING：只读绑定与代次、配置 / 场景策略、变换来源 / 时间 / 标定有效性及 XR 复验仍按矩阵由后续任务完成。
+REQ-002、REQ-004 和 REQ-016 已获得基础标识、带工具目标 / 数值校验和坐标数学的 UNIT 证据，见 [AR-0011](records/AR-0011-domain-foundation-final.md)。状态保持 DEVELOPING：只读绑定的新增证据见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)；运行时代次 / 切换、配置 / 场景策略、变换来源 / 时间 / 标定有效性及 XR 复验仍按矩阵由后续任务完成。
+
+REQ-003 已获得纯有效能力组合、版本与原因以及只读发现的 UNIT / MOCK 证据，见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。状态保持 DEVELOPING；配置与执行链的实际准入、后续阶段的能力变化仍须按矩阵验证。

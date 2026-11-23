@@ -1,7 +1,7 @@
 # 软件技术架构 v0.1
 
 - 更新日期：2026-11-20
-- 状态：总体架构草案；最小工程 / 时钟源码已开始，安装与验证状态见[工程基线](06-python-foundation.md)，其余组件尚未实现
+- 状态：总体架构草案；工程 / 时钟、基础类型与只读 Registry 已交付，安装与验证状态见[工程基线](06-python-foundation.md)，执行 / 停止、持久化和外部适配仍按后续任务实现
 - 前置：[软件思想](01-principles-and-scope.md)
 - 配套：[契约与适配器](03-contracts-and-adapters.md)、[实施与验收](04-delivery-and-validation.md)
 
@@ -288,7 +288,7 @@ tests/                    # 单元、契约、集成、故障注入
 docs/                     # 当前资料与设计
 ```
 
-当前只创建[最小工程](../../src/framework/)需要的 domain、application 和时钟适配；时钟端口暂位于 application/ports.py，不为建议树补齐独立空目录，安装 / 实测范围见工程记录。
+当前[源码](../../src/framework/)包含 domain 的时间、基础值、几何、目标、能力和只读观测，application 的读取端口与 Registry，以及时钟 / 只读 mock 适配；端口位于 application/ports.py，不为建议树补齐独立空目录。安装 / 实测范围见[工程基线](06-python-foundation.md)。
 
 内核使用普通领域类型；Pydantic 模型位于边界，不让 HTTP DTO、ROS 消息和 ORM 模型成为同一个类。实现首阶段只创建必要目录，不为了填满此树生成空壳模块。
 

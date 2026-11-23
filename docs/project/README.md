@@ -3,7 +3,7 @@
 - 建立日期：2026-11-20
 - 工作基线：v0.1 设计草案；用于拆解和验证，不代表方案已由用户最终定版
 - 读者：框架 / 适配器 / XR 开发者、测试执行者与验收参与者
-- 当前事实：详细设计、最小工程与基础类型已交付；DEV-M1-03 和三个 T28 切片完成，产品验收 PENDING
+- 当前事实：详细设计、最小工程、基础类型、能力组合与只读发现已交付；I01 十个技术切片完成，迭代 IN_ACCEPTANCE，产品验收 PENDING
 
 ## 1. 从这里进入
 
@@ -13,12 +13,12 @@
 | [开发台账](backlog.md) | M1 的可执行任务、依赖和状态；M2—M5 为待细化工作包 |
 | [测试计划](test-plan.md) | T01—T46 定义与环境切片；实际运行 / 阻塞只查对应 AR |
 | [验收规则与闸门](acceptance.md) | 阶段出口、证据要求、记录索引和每轮记录模板 |
-| [I01：内核基础与只读发现](iterations/I01-M1-foundation.md) | 当前迭代，状态 ACTIVE；下一项为 Registry 与只读发现 |
+| [I01：内核基础与只读发现](iterations/I01-M1-foundation.md) | 当前迭代，状态 IN_ACCEPTANCE；技术切片齐备，待产品验收 |
 | [首次跟踪检查记录](records/AR-0001-tracking-bootstrap.md) | 保留首次文档检查尝试，不覆盖历史 |
 | [跟踪检查复验](records/AR-0002-tracking-recheck.md) | 文档工具修复后的 DOC 复验，不是产品验收 |
 | [技术设计入口](../README.md) | 原则、架构、契约、实施路线与调研 |
 
-**DEV-M1-03 已完成。** 三个 T28 切片、原 T26 回归与独立 wheel 安装的证据见 [AR-0011](records/AR-0011-domain-foundation-final.md)。下一项 DEV-M1-04 为 Registry、能力组合和只读发现；I01 产品验收 PENDING。
+**DEV-M1-04 已完成。** 能力组合 / 版本、只读 Registry / SIM mock、十个切片与独立 wheel 安装证据见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。I01 进入 IN_ACCEPTANCE，产品验收 PENDING。后续先锁定 I02 的租约、状态投影与 mock 执行 / 停止范围，开发依赖从 DEV-M1-05 推进。
 
 REAL 仍未授权；不连接设备、不启用真机运动、不执行真机故障注入。工作流中的“循环”指每轮交付后更新记录，不是无人值守定时执行或自动控制机器人。
 

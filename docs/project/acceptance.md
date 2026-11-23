@@ -67,6 +67,10 @@ M4 准入先只读，运动和故障试验再分步批准；本地停车链无�
 | AR-0009 | 2026-11-23 | UNIT：DEV-M1-03 首轮实现与独立复核；有限结果的中间溢出反例 | [基础类型复核](records/AR-0009-domain-foundation-recheck.md) |
 | AR-0010 | 2026-11-23 | UNIT＋DOC：首次数值修正复验；最大有限值的舍入反例 | [数值边界复核](records/AR-0010-domain-foundation-final.md) |
 | AR-0011 | 2026-11-23 | UNIT＋DOC：极端范围精确运算、T28、安装与项目主页最终复验 | [基础类型最终复验](records/AR-0011-domain-foundation-final.md) |
+| AR-0012 | 2026-11-23 | UNIT / MOCK：DEV-M1-04 启动与 T29 / T46 实现前证据 | [只读 Registry 启动](records/AR-0012-readonly-registry-start.md) |
+| AR-0013 | 2026-11-23 | UNIT / MOCK＋DOC：首次实现通过、子类边界复核失败 | [只读 Registry 复核](records/AR-0013-readonly-registry-review.md) |
+| AR-0014 | 2026-11-23 | UNIT / MOCK＋DOC：具体数据边界修正与工程通过、批量发现复核失败 | [只读 Registry 最终复验](records/AR-0014-readonly-registry-final.md) |
+| AR-0015 | 2026-11-23 | UNIT / MOCK＋DOC：批量发现版本修正与最终工程复验 | [只读发现最终复验](records/AR-0015-readonly-registry-batch-final.md) |
 
 ## 5. 每轮记录模板
 

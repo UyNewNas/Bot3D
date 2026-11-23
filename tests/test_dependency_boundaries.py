@@ -117,10 +117,16 @@ def deny_io(event, args):
 sys.meta_path.insert(0, BlockOuterDependencies())
 sys.addaudithook(deny_io)
 import framework
+from framework.adapters.mock_robot import ReadOnlyMockBackend
+from framework.application.registry import RobotRegistry
+from framework.domain.capabilities import CapabilityInputs, UnavailableReason
+from framework.domain.discovery import (
+    BackendDescription, BackendIdentity, BackendKind, BackendState, MotionState, ReadOnlyObservation,
+)
 from framework.domain.time import MonotonicInstant
 from framework.domain.geometry import Quaternion, RigidTransform
 from framework.domain.targets import PoseGoal
-from framework.domain.values import FrameId, RobotId, ToolId, Vector3
+from framework.domain.values import DeviceId, FrameId, RobotId, ToolId, Vector3
 from framework.application.ports import MonotonicClock
 assert not any(name.split('.')[0] in blocked for name in sys.modules)
 assert MonotonicInstant('plain', 0).tick_ns == 0
@@ -129,6 +135,20 @@ world = FrameId('cell/world')
 identity = Quaternion(0, 0, 0, 1)
 goal = PoseGoal(RobotId('arm-fixture'), base, ToolId('tool0'), Vector3(0, 0, 0), identity)
 assert goal.transformed(RigidTransform(world, base, Vector3(1, 2, 3), identity)).frame_id == world
+robot = RobotId('arm-fixture')
+backend = BackendIdentity(DeviceId('mock-device-a'), 'mock-backend-a', BackendKind.SIM, 'fixture-epoch-a')
+inputs = CapabilityInputs(True, True, True, True, True, 'fixture-config-1', None)
+unknown = ReadOnlyObservation(None, MotionState.UNKNOWN, None, None)
+mock = ReadOnlyMockBackend(BackendDescription(backend, 'Fixture arm', inputs), BackendState(backend, unknown))
+registry = RobotRegistry()
+registered = registry.register(robot, mock)
+assert registry.discover() == (registered,)
+state = registry.read_state(robot)
+assert registered.binding.robot_id == robot and registered.binding.backend == backend
+assert state.binding == registered.binding and state.observation == unknown
+assert state.capability_revision == registered.capabilities.revision == 1
+assert registered.capabilities.pose_goal.available is False
+assert registered.capabilities.pose_goal.reasons == (UnavailableReason.EXECUTION_UNAVAILABLE,)
 print('isolated core dependency boundary OK')
 '''
     result = subprocess.run([sys.executable, '-I', '-c', code], cwd=tmp_path,

@@ -2,7 +2,7 @@
 
 - 更新日期：2026-11-23
 - 当前阶段：v0.1 设计与需求—开发—测试—验收跟踪基线
-- 当前交付：设计 / 跟踪、可安装 Python 包、时钟端口、标识与 SI 值、位姿目标及坐标数学；最新验证见 [AR-0011](project/records/AR-0011-domain-foundation-final.md)
+- 当前交付：设计 / 跟踪、可安装 Python 包、时钟与基础类型、坐标数学、能力组合 / 版本及只读 Registry / mock；最新验证见 [AR-0015](project/records/AR-0015-readonly-registry-batch-final.md)
 
 ## 文档索引与阅读顺序
 
@@ -15,6 +15,7 @@
 | 专题 | [运行时协调详细设计](design/05-runtime-coordination.md) | 状态转换、最终裁决、停止闭合、崩溃对账与设计级场景 |
 | 专题 | [Python 工程与时钟基线](design/06-python-foundation.md) | 版本 / 依赖锁、领域值 / 端口及安装、测试步骤 |
 | 专题 | [基础类型、目标与坐标数学](design/07-domain-types-and-geometry.md) | 标识、SI 单位、有限数、四元数、刚体变换及独立数学基准 |
+| 专题 | [只读 Registry 与有效能力](design/08-readonly-registry-and-capabilities.md) | 机器人 / 设备身份、只读发现、能力组合与版本、未知观测 |
 | 5 | [项目闭环跟踪](project/README.md) | 需求 / AC、开发台账、测试计划、闸门、迭代与实际记录 |
 | 参考 | [技术资料调研](research/technology-survey.md) | 机器人 SDK / 协议、中间件、仿真、VR / XR 和官方资料 |
 
@@ -42,4 +43,4 @@
 
 ## 下一步
 
-[I01：内核基础与只读发现](project/iterations/I01-M1-foundation.md) 为 ACTIVE。DEV-M1-01—DEV-M1-03 已完成，下一项为 DEV-M1-04 的 Registry、能力组合与只读发现，基础类型交付见[复验记录](project/records/AR-0011-domain-foundation-final.md)。M1 的执行 / 停止和持久化 / 恢复安排在后续迭代，详见[项目入口](project/README.md)。
+[I01：内核基础与只读发现](project/iterations/I01-M1-foundation.md) 为 IN_ACCEPTANCE。DEV-M1-01—DEV-M1-04 已完成，十个 UNIT / MOCK 技术切片全部通过，见[复验记录](project/records/AR-0015-readonly-registry-batch-final.md)；产品验收仍为 PENDING。下一轮先锁定 I02 的租约、状态投影与 mock 执行 / 停止范围，持久化 / 恢复留 I03，详见[项目入口](project/README.md)。

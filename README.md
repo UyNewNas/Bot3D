@@ -23,8 +23,12 @@ flowchart TB
     Client["桌面应用 / XR（规划）"] -.-> Gateway["HTTP / WebSocket 网关（规划）"]
     Gateway -.-> Coordinator["应用协调（规划）"]
     Coordinator -.-> Domain["领域层 · 标识、几何、时间"]
-    Coordinator -.-> RobotPorts["规划、执行与反馈端口（规划）"]
+    Coordinator -.-> RobotPorts["规划与执行端口（规划）"]
+    Coordinator -.-> Registry["应用层 · 只读 Registry"]
     Coordinator -.-> ClockPort["应用层 · 单调时钟端口"]
+    Registry --> ReadPort["只读后端端口"]
+    ReadMock["只读 SIM mock"] --> ReadPort
+    ReadPort --> Domain
     RobotAdapters["ROS 2 / MoveIt 2 / Gazebo（规划）"] -.-> RobotPorts
     RobotPorts -.-> Domain
     ClockAdapters["系统 / 人工时钟适配器"] --> ClockPort
@@ -47,11 +51,13 @@ flowchart TB
 
 | 模块 | 当前实现 |
 | --- | --- |
-| `framework.domain` | 不可变的机器人、设备、坐标系与工具标识，有限数向量、显式 SI 单位换算、四元数、刚体变换、带工具的位姿目标，以及单调时刻值。 |
-| `framework.application` | `MonotonicClock` 端口，调用方通过 `now()` 获取带时钟域的读数。 |
-| `framework.adapters` | 系统时钟和显式推进的人工时钟。测试注入人工时钟即可验证时间相关逻辑，无需等待。 |
+| `framework.domain` | 不可变标识、SI 值、四元数 / 刚体变换、位姿目标与单调时刻；纯能力组合、能力版本和只读身份 / 观测值。 |
+| `framework.application` | `RobotRegistry` 提供注册、发现、描述和状态查询；`ReadOnlyBackend` 只提供读操作，`MonotonicClock` 提供带时钟域的读数。 |
+| `framework.adapters` | 系统时钟、显式推进的人工时钟和静态只读 SIM mock，供独立测试与应用接入验证使用。 |
 
 位姿目标以米表示位置，方向采用右手主动旋转与 `xyzw` 四元数。变换带源坐标系和目标坐标系，组合变换或转换目标时会检查坐标系是否匹配。数值构造拒绝非有限分量，单位换算在边界显式进行。[基础类型与坐标数学](docs/design/07-domain-types-and-geometry.md)
+
+有效能力由规划、模型、坐标、策略和执行支持共同计算。只读 Registry 始终保留缺少执行支持的原因；重复查询保持能力版本，配置、模式或可用性语义变化时递增。机器人与设备身份分开，多个只读镜像可以共享一个设备。[只读 Registry 与能力模型](docs/design/08-readonly-registry-and-capabilities.md)
 
 ## 快速上手
 
@@ -102,6 +108,43 @@ print(f"{world_goal.frame_id.value}: ({x:.2f}, {y:.2f}, {z:.2f}) m")
 
 将示例保存为 `pose_example.py`，在仓库根目录运行 `uv run --no-sync python -I pose_example.py`。转换会更新目标的位置、方向和坐标系，保留机器人与工具标识。
 
+### 发现只读模拟机器人
+
+下面注册一个静态 SIM 样例，读取设备身份、能力和未知反馈。所有输入都是人工 fixture，运行时只调用读接口。
+
+```python
+from framework.adapters.mock_robot import ReadOnlyMockBackend
+from framework.application.registry import RobotRegistry
+from framework.domain.capabilities import CapabilityInputs
+from framework.domain.discovery import (
+    BackendDescription, BackendIdentity, BackendKind, BackendState,
+    MotionState, ReadOnlyObservation,
+)
+from framework.domain.values import DeviceId, RobotId
+
+identity = BackendIdentity(
+    DeviceId("mock-device-a"), "mock-backend-a", BackendKind.SIM, "fixture-epoch-a",
+)
+inputs = CapabilityInputs(
+    planning=True, model=True, frames=True, policy=True, execution=False,
+    configuration_revision="fixture-config-1", mode=None,
+)
+backend = ReadOnlyMockBackend(
+    BackendDescription(identity, "Fixture arm", inputs),
+    BackendState(identity, ReadOnlyObservation(None, MotionState.UNKNOWN, None, None)),
+)
+registry = RobotRegistry()
+robot = RobotId("arm-fixture")
+description = registry.register(robot, backend)
+state = registry.read_state(robot)
+
+print(description.binding.backend.device_id.value)  # mock-device-a
+print(description.capabilities.pose_goal.available)  # False
+print(state.observation.motion_state.value)  # UNKNOWN
+```
+
+保存为 `readonly_example.py` 后，运行 `uv run --no-sync python -I readonly_example.py`。未知关节数据、控制模式和急停观测保留为 `None`；只读对象没有运动、停止或仿真控制方法。
+
 ### 运行测试
 
 ```bash
@@ -109,11 +152,11 @@ uv run --no-sync python -I -m pytest
 uv run --no-sync python -I tools/check_import_boundaries.py
 ```
 
-测试在隔离解释器中检查已安装的内核，覆盖标识、单位换算、变换方向、姿态组合和时钟域。依赖检查约束核心包的导入边界。
+测试在隔离解释器中检查已安装的内核，覆盖标识、坐标数学、时钟域、能力组合 / 版本、身份一致性和只读约束。依赖检查约束核心包的导入边界。
 
 ## 开发路线
 
-当前处于内核基础与只读发现阶段。接下来将实现机器人注册表、能力描述、只读绑定和模拟状态，再验证任务协调。
+当前已提供内核基础、能力组合、只读绑定与模拟状态查询。接下来进入控制租约、状态投影、命令记录和 mock 协调链的实现，再验证执行、停止与恢复。
 
 | 阶段 | 计划验证的能力 |
 | --- | --- |
