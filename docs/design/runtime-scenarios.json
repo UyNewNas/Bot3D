@@ -1,0 +1,1406 @@
+{
+  "schema_version": 1,
+  "evidence_level": "DOC",
+  "cases": [
+    {
+      "id": "T31/stop-before-plan",
+      "test": "T31",
+      "theme": "stop-before-plan",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "stop",
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/intent-inflight",
+      "test": "T31",
+      "theme": "intent-inflight",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_pending",
+        "stop",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/queued-revoked",
+      "test": "T31",
+      "theme": "queued-revoked",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "stop",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/context-invalid",
+      "test": "T31",
+      "theme": "context-invalid",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "invalidate",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "INTERRUPTED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": true,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/start-equal",
+      "test": "T31",
+      "theme": "start-equal",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "tick:100",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "TIMED_OUT",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/lease-equal",
+      "test": "T31",
+      "theme": "lease-equal",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 50,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "tick:50",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/budget-equal",
+      "test": "T31",
+      "theme": "budget-equal",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 30
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "tick:30",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "TIMED_OUT",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/before-deadline",
+      "test": "T31",
+      "theme": "before-deadline",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "tick:99",
+        "claim",
+        "send",
+        "accepted"
+      ],
+      "expected": {
+        "state": "EXECUTING",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 0,
+        "query_calls": 0,
+        "arming": "ARMED",
+        "lease": true,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/claim-before-stop",
+      "test": "T31",
+      "theme": "claim-before-stop",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "stop",
+        "stop_ack",
+        "park",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/accepted-before-stop",
+      "test": "T31",
+      "theme": "accepted-before-stop",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "accepted",
+        "stop",
+        "stop_ack",
+        "park",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/receipt-not-parking",
+      "test": "T31",
+      "theme": "receipt-not-parking",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "stop_ack",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/early-parking",
+      "test": "T31",
+      "theme": "early-parking",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "stop_ack",
+        "park",
+        "cancel_confirmed",
+        "close_writer",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/no-parking",
+      "test": "T31",
+      "theme": "no-parking",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "close_writer",
+        "repeat_stop",
+        "stop_ack",
+        "cancel_confirmed",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/complete-stop",
+      "test": "T31",
+      "theme": "complete-stop",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "stop",
+        "stop_ack",
+        "park",
+        "send",
+        "accepted",
+        "close_writer",
+        "repeat_stop",
+        "stop_ack",
+        "cancel_confirmed",
+        "park",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/log-blocked",
+      "test": "T31",
+      "theme": "log-blocked",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_pending",
+        "journal_block",
+        "stop",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/audit-failure",
+      "test": "T31",
+      "theme": "audit-failure",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "close_writer",
+        "repeat_stop",
+        "cancel_confirmed",
+        "park",
+        "audit_fail",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/lost-response",
+      "test": "T31",
+      "theme": "lost-response",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "response_lost",
+        "query_unknown",
+        "query_unknown"
+      ],
+      "expected": {
+        "state": "INTERRUPTED",
+        "certainty": "UNKNOWN",
+        "slot": false,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 2,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/late-accept",
+      "test": "T31",
+      "theme": "late-accept",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "accepted"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/restart-late-send",
+      "test": "T31",
+      "theme": "restart-late-send",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "restart",
+        "send",
+        "accepted",
+        "query_unknown"
+      ],
+      "expected": {
+        "state": "INTERRUPTED",
+        "certainty": "UNKNOWN",
+        "slot": false,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 1,
+        "query_calls": 1,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": true,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/old-stop",
+      "test": "T31",
+      "theme": "old-stop",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "invalidate",
+        "old_stop",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "INTERRUPTED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": true,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/normal-cancel",
+      "test": "T31",
+      "theme": "normal-cancel",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "cancel",
+        "claim",
+        "send"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 0,
+        "stop_calls": 1,
+        "query_calls": 0,
+        "arming": "ARMED",
+        "lease": true,
+        "ticket": "revoked",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "none"
+      }
+    },
+    {
+      "id": "T31/cancel-after-claim",
+      "test": "T31",
+      "theme": "cancel-after-claim",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "cancel",
+        "close_writer",
+        "repeat_stop",
+        "cancel_confirmed",
+        "park",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCELLED",
+        "certainty": "CONFIRMED",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "ARMED",
+        "lease": true,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/one-shot",
+      "test": "T31",
+      "theme": "one-shot",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "claim",
+        "send",
+        "send",
+        "accepted"
+      ],
+      "expected": {
+        "state": "EXECUTING",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 0,
+        "query_calls": 0,
+        "arming": "ARMED",
+        "lease": true,
+        "ticket": "consumed",
+        "writer_closed": false,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/unknown-history-unlock",
+      "test": "T31",
+      "theme": "unknown-history-unlock",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "response_lost",
+        "accepted",
+        "close_writer",
+        "repeat_stop",
+        "park",
+        "authorize",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "INTERRUPTED",
+        "certainty": "UNKNOWN",
+        "slot": false,
+        "locked": false,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/stale-after-audit",
+      "test": "T31",
+      "theme": "stale-after-audit",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "close_writer",
+        "repeat_stop",
+        "cancel_confirmed",
+        "park",
+        "audit",
+        "park_stale",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T31/missing-cancel-proof",
+      "test": "T31",
+      "theme": "missing-cancel-proof",
+      "limits": {
+        "start_before": 100,
+        "lease_expiry": 1000,
+        "budget": 1000
+      },
+      "steps": [
+        "plan",
+        "intent_saved",
+        "queued",
+        "claim",
+        "send",
+        "stop",
+        "close_writer",
+        "repeat_stop",
+        "park",
+        "audit",
+        "unlock"
+      ],
+      "expected": {
+        "state": "CANCEL_REQUESTED",
+        "certainty": "PENDING",
+        "slot": true,
+        "locked": true,
+        "execute_calls": 1,
+        "stop_calls": 2,
+        "query_calls": 0,
+        "arming": "DISARMED",
+        "lease": false,
+        "ticket": "consumed",
+        "writer_closed": true,
+        "epoch_changed": false,
+        "target": "original"
+      }
+    },
+    {
+      "id": "T34/unknown-safe",
+      "test": "T34",
+      "theme": "unknown-safe",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": true,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/success-moving",
+      "test": "T34",
+      "theme": "success-moving",
+      "terminal_state": "SUCCEEDED",
+      "terminal_certainty": "CONFIRMED",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "MOVING",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "SUCCEEDED",
+        "terminal_certainty": "CONFIRMED",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/failure-writer-live",
+      "test": "T34",
+      "theme": "failure-writer-live",
+      "terminal_state": "FAILED",
+      "terminal_certainty": "CONFIRMED",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "NONE",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "FAILED",
+        "terminal_certainty": "CONFIRMED",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/no-feedback",
+      "test": "T34",
+      "theme": "no-feedback",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "NONE",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/stale-feedback",
+      "test": "T34",
+      "theme": "stale-feedback",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "STALE",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/early-feedback",
+      "test": "T34",
+      "theme": "early-feedback",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "EARLY_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/receipt-only",
+      "test": "T34",
+      "theme": "receipt-only",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "STOP_ACK",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/app-epoch-only",
+      "test": "T34",
+      "theme": "app-epoch-only",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "APP_EPOCH_ONLY",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/local-exit-only",
+      "test": "T34",
+      "theme": "local-exit-only",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "LOCAL_EXIT_ONLY",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/handle-not-found",
+      "test": "T34",
+      "theme": "handle-not-found",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "HANDLE_NOT_FOUND",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/binding-mismatch",
+      "test": "T34",
+      "theme": "binding-mismatch",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": false,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/unauthorized",
+      "test": "T34",
+      "theme": "unauthorized",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": false,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/audit-failure",
+      "test": "T34",
+      "theme": "audit-failure",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": false,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/no-post-barrier-stop",
+      "test": "T34",
+      "theme": "no-post-barrier-stop",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": false,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/success-safe",
+      "test": "T34",
+      "theme": "success-safe",
+      "terminal_state": "SUCCEEDED",
+      "terminal_certainty": "CONFIRMED",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": true,
+        "terminal_state": "SUCCEEDED",
+        "terminal_certainty": "CONFIRMED",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/failure-safe",
+      "test": "T34",
+      "theme": "failure-safe",
+      "terminal_state": "FAILED",
+      "terminal_certainty": "CONFIRMED",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "DRAIN_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": true,
+        "terminal_state": "FAILED",
+        "terminal_certainty": "CONFIRMED",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/no-intent-live-writer",
+      "test": "T34",
+      "theme": "no-intent-live-writer",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "NONE",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": false
+      },
+      "expected": {
+        "may_unlock": false,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    },
+    {
+      "id": "T34/fenced-safe",
+      "test": "T34",
+      "theme": "fenced-safe",
+      "terminal_state": "INTERRUPTED",
+      "terminal_certainty": "UNKNOWN",
+      "evidence": {
+        "binding_matches": true,
+        "writer_proof": "FENCE_CONFIRMED",
+        "motion_proof": "FRESH_STOPPED",
+        "post_barrier_stop": true,
+        "authorized": true,
+        "audit_saved": true,
+        "intent_exists": true
+      },
+      "expected": {
+        "may_unlock": true,
+        "terminal_state": "INTERRUPTED",
+        "terminal_certainty": "UNKNOWN",
+        "arming": "DISARMED",
+        "lease_restored": false,
+        "execute_calls": 0,
+        "new_epoch": true,
+        "history_rewritten": false
+      }
+    }
+  ]
+}
