@@ -31,6 +31,33 @@ def test_allowed_imports(source, layer):
     assert not policy.import_violations(source, f'framework.{layer}.example', layer=layer)
 
 
+@pytest.mark.parametrize('layer', ['root', 'domain', 'application'])
+@pytest.mark.parametrize('source', [
+    'from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from xmlrpc.client import ServerProxy',
+    'def connect():\n    import xmlrpc.client as rpc',
+    'from wsgiref.simple_server import make_server',
+])
+def test_core_rejects_stdlib_http_transports(source, layer):
+    module = 'framework' if layer == 'root' else f'framework.{layer}.example'
+    assert policy.import_violations(source, module, layer=layer, is_package=layer == 'root')
+
+
+@pytest.mark.parametrize('source', [
+    'from threading import Lock',
+    'import _thread as threads',
+    'from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    import asyncio',
+    'def build_executor():\n    from concurrent.futures import ThreadPoolExecutor',
+    'from multiprocessing import Process',
+])
+def test_domain_rejects_concurrency_dependencies(source):
+    assert policy.import_violations(source, 'framework.domain.example', layer='domain')
+
+
+@pytest.mark.parametrize('source', ['import asyncio', 'from threading import Lock'])
+def test_application_can_use_concurrency_primitives(source):
+    assert not policy.import_violations(source, 'framework.application.example', layer='application')
+
+
 @pytest.mark.parametrize('source', [
     'import rclpy', 'import moveit', 'import fastapi', 'import pydantic',
     'import sqlalchemy', 'import UnityEngine', 'import http.client',
@@ -77,7 +104,7 @@ def test_installed_core_import_has_no_transport_dependencies_or_service_start(tm
     code = '''
 import sys
 blocked = {'rclpy', 'moveit', 'UnityEngine', 'fastapi', 'pydantic', 'sqlalchemy',
-           'http', 'urllib', 'socket', 'sqlite3'}
+           'http', 'urllib', 'socket', 'sqlite3', 'xmlrpc', 'wsgiref'}
 class BlockOuterDependencies:
     def find_spec(self, fullname, path=None, target=None):
         if fullname.split('.')[0] in blocked:
@@ -91,9 +118,17 @@ sys.meta_path.insert(0, BlockOuterDependencies())
 sys.addaudithook(deny_io)
 import framework
 from framework.domain.time import MonotonicInstant
+from framework.domain.geometry import Quaternion, RigidTransform
+from framework.domain.targets import PoseGoal
+from framework.domain.values import FrameId, RobotId, ToolId, Vector3
 from framework.application.ports import MonotonicClock
 assert not any(name.split('.')[0] in blocked for name in sys.modules)
 assert MonotonicInstant('plain', 0).tick_ns == 0
+base = FrameId('arm-fixture/base')
+world = FrameId('cell/world')
+identity = Quaternion(0, 0, 0, 1)
+goal = PoseGoal(RobotId('arm-fixture'), base, ToolId('tool0'), Vector3(0, 0, 0), identity)
+assert goal.transformed(RigidTransform(world, base, Vector3(1, 2, 3), identity)).frame_id == world
 print('isolated core dependency boundary OK')
 '''
     result = subprocess.run([sys.executable, '-I', '-c', code], cwd=tmp_path,

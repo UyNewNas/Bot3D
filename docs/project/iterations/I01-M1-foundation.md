@@ -4,7 +4,7 @@
 - 迭代状态：ACTIVE
 - 闸门：G-I01；不等于 G-M1
 - 独立复核 / 验收角色待指定
-- 当前事实：DEV-M1-01 设计交付见 [AR-0003](../records/AR-0003-runtime-design.md)，DEV-M1-02 工程基础复验见 [AR-0005](../records/AR-0005-python-foundation-recheck.md)。下一项 DEV-M1-03 为 TODO
+- 当前事实：DEV-M1-01 设计交付见 [AR-0003](../records/AR-0003-runtime-design.md)，DEV-M1-02 工程修正见 [AR-0007](../records/AR-0007-foundation-boundary-recheck.md)，DEV-M1-03 基础类型与最新回归见 [AR-0011](../records/AR-0011-domain-foundation-final.md)。下一项为 DEV-M1-04
 - 权威状态：[开发台账](../backlog.md)；需求映射只见[追踪矩阵](../requirements.md)
 
 ## 1. 目标与范围
@@ -44,7 +44,7 @@
 
 ## 4. 必验切片
 
-本轮共十个 UNIT / MOCK 切片。三个 T26 切片的复现命令和结果见 [AR-0005](../records/AR-0005-python-foundation-recheck.md)，其余七个切片为 NOT_RUN。
+本轮共十个 UNIT / MOCK 切片。三个 T26 和三个 T28 切片已通过，复现命令和结果见 [AR-0011](../records/AR-0011-domain-foundation-final.md)；T29 / T46 的四个切片仍为 NOT_RUN。
 
 | 测试 / 子场景 | 必须证据 |
 | --- | --- |
@@ -63,8 +63,8 @@
 
 ## 5. 排除项与出口
 
-不实现运动提交、规划 / 执行 mock 闭环、租约激活、SQLite、恢复与绑定切换、HTTP / WS、ROS / Gazebo、Unity / XR 或真实设备操作；不安装这些平台，不采购，不 Git 提交 / 推送，不外部发布。后续任务仍按台账依赖推进。
+不实现运动提交、规划 / 执行 mock 闭环、租约激活、SQLite、恢复与绑定切换、HTTP / WS、ROS / Gazebo、Unity / XR 或真实设备操作；不安装这些平台，不采购。Git 提交 / 推送与外部发布按当轮授权处理；本轮用户已明确要求将 README 项目主页重写与 DEV-M1-03 一同提交。后续任务仍按台账依赖推进。
 
 G-I01 出口：四个工作包交付及针对性检查有记录；十个切片全部通过；DOC 设计评审的阻断问题已处置；运行说明、版本、已知限制完整；指定验收角色独立判定。缺少验收者时产品验收保持 PENDING，迭代不 CLOSED。失败保留 DEF，修复新增 AR；范围 / 契约变化走 CHG。
 
-DEV-M1-03 和 DEV-M1-04 仍待交付，G-I01 验收 PENDING。I02 在后续轮次定义。
+DEV-M1-03 已交付，DEV-M1-04 的能力组合与只读发现仍待交付；G-I01 验收 PENDING。I02 在后续轮次定义。

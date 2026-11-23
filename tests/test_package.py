@@ -40,12 +40,21 @@ def test_isolated_import_from_outside_the_repository(tmp_path):
     code = '''
 import framework
 from framework.domain.time import MonotonicInstant
+from framework.domain.geometry import Quaternion, RigidTransform
+from framework.domain.targets import PoseGoal
+from framework.domain.values import FrameId, RobotId, ToolId, Vector3
 from framework.application.ports import MonotonicClock
 from framework.adapters.clocks import ManualMonotonicClock, SystemMonotonicClock
 clock = ManualMonotonicClock(clock_id='isolated-wheel')
 assert clock.now() == MonotonicInstant('isolated-wheel', 0)
 clock.advance_ns(7)
 assert clock.now().tick_ns == 7
+base = FrameId('arm-fixture/base')
+world = FrameId('cell/world')
+identity = Quaternion.from_xyzw((0, 0, 0, 1))
+goal = PoseGoal(RobotId('arm-fixture'), base, ToolId('tool0'), Vector3(1, 0, 0), identity)
+moved = goal.transformed(RigidTransform(world, base, Vector3(1, 2, 3), identity))
+assert (moved.frame_id, moved.position_m.as_tuple()) == (world, (2.0, 2.0, 3.0))
 print('isolated installed package import OK')
 '''
     result = subprocess.run([sys.executable, '-I', '-c', code], cwd=tmp_path,

@@ -2,18 +2,18 @@
 
 - 日期：2026-11-20
 - 工作包：DEV-M1-02；I01 的最小工程切片
-- 当前边界：已验证最小 Python 包、时钟领域值与时钟端口，实际记录见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)
-- 关联：[运行时详细设计](05-runtime-coordination.md)、[项目入口](../project/README.md)、[仓库运行说明](../../README.md)
+- 当前边界：已验证 Python 包、时钟和基础领域值；最新 T26 / T28 与独立安装复验见 [AR-0011](../project/records/AR-0011-domain-foundation-final.md)，依赖检查补漏见 [AR-0007](../project/records/AR-0007-foundation-boundary-recheck.md)，原 Windows 基线见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)
+- 关联：[运行时详细设计](05-runtime-coordination.md)、[基础类型与坐标数学](07-domain-types-and-geometry.md)、[项目入口](../project/README.md)、[仓库运行说明](../../README.md)
 
 ## 1. 版本决策
 
-继续采用既有 Python 3.12 候选：它与首条 Ubuntu 24.04 / ROS 2 Jazzy 候选环境的 Python minor 对齐，也能满足普通 dataclass / Protocol 的内核设计。不因系统默认 3.13.1 改为 3.13。本轮实际选择已安装的 CPython 3.12.11 作为精确复现解释器，[.python-version](../../.python-version)固定 patch，[包元数据](../../pyproject.toml)限制 >=3.12,<3.13；这不声称其他 3.12 patch 已测。
+继续采用既有 Python 3.12 候选：它与首条 Ubuntu 24.04 / ROS 2 Jazzy 候选环境的 Python minor 对齐，也能满足普通 dataclass / Protocol 的内核设计。不因系统默认 3.13.1 改为 3.13。原 Windows 基线选择已有的 CPython 3.12.11，Linux 补充复验使用相同版本；[.python-version](../../.python-version)固定 patch，[包元数据](../../pyproject.toml)限制 >=3.12,<3.13。其他 3.12 patch 未完成三个 T26 切片的精确复验。
 
-3.12.11 是本轮本地复现版本，不是最新安全补丁或部署批准。后续进入联网服务 / SIM / REAL 部署前必须审查维护补丁并回归；升级 patch 同样记录实际版本、修改版本文件、重建虚拟环境及重复 T26，不静默替换。无需为本轮安装解释器或修改全局 Python。
+3.12.11 是本地复现版本，不是最新安全补丁或部署批准。后续进入联网服务 / SIM / REAL 部署前必须审查维护补丁并回归；升级 patch 同样记录实际版本、修改版本文件、重建虚拟环境及重复 T26，不静默替换。原 Windows 环境无需另装解释器；Linux 复验在任务隔离目录准备精确版本，没有修改系统解释器或项目版本约束。
 
 | 对象 | 固定值 / 权威位置 | 边界 |
 | --- | --- | --- |
-| CPython / 环境工具 | 3.12.11 / uv 0.10.9；pyproject 约束 uv 版本 | 在 Windows 11 上完成项目环境安装与独立消费者检查 |
+| CPython / 环境工具 | 3.12.11 / uv 0.10.9；pyproject 约束 uv 版本 | Windows 11 基线与 Linux 补充复验均完成项目环境安装与独立消费者检查；各次证据分别保留 |
 | 运行依赖 | dependencies=[] | 只用标准库；不安装 ROS / 引擎 / SDK、HTTP、Pydantic 或 ORM |
 | 构建后端 | setuptools==80.9.0、wheel==0.45.1 | 固定在 build-system.requires；构建隔离仍需这些工具可用，不能靠默认最新版 |
 | 开发依赖 | pytest==8.4.2 | dependency-groups.dev；安装仅在项目虚拟环境内 |
@@ -26,18 +26,21 @@
 分发名为 bot3d-kernel，导入名为 framework，沿用架构的 src/framework 建议。只创建本轮实际使用的包，不建立网关、Registry、Planner、Backend、Journal、数据库或 bootstrap 空壳。
 
 - [领域时间值](../../src/framework/domain/time.py)：冻结的 MonotonicInstant 与跨时钟错误；只依赖 dataclasses。
+- [标识与 SI 值](../../src/framework/domain/values.py)、[坐标数学](../../src/framework/domain/geometry.py)、[位姿目标](../../src/framework/domain/targets.py)：DEV-M1-03 的不可变值与纯数学；具体 API、方向和数值边界见[专题设计](07-domain-types-and-geometry.md)。
 - [应用时钟端口](../../src/framework/application/ports.py)：MonotonicClock Protocol，只有 now()，返回普通领域值；不携带 HTTP DTO、SDK / ROS 对象。
 - [时钟适配器](../../src/framework/adapters/clocks.py)：SystemMonotonicClock 与明确注入的 ManualMonotonicClock；不启动服务或设备连接。
-- [单元测试](../../tests/)：包安装、依赖边界、端口与时钟三个 T26 切片；fixture 按函数创建，无全局共享时钟。
+- [单元测试](../../tests/)：包安装、依赖边界、端口与时钟三个 T26 切片，以及值、基准变换和四元数三个 T28 切片；fixture 按函数创建，无全局共享时钟。
 - [依赖检查器](../../tools/check_import_boundaries.py)：只读 AST 检查，核心为 root / domain / application；适配层可向内，不被内核反向导入。
 - [独立 wheel 消费者检查](../../tools/check_wheel_install.py)：仓库外临时空 venv、无 pip / pytest、离线安装本地 wheel，再用 -I 导入与探测；未构建时不能运行成功。
 
-核心允许标准库与向内的 framework 导入；显式拒绝 HTTP / socket / SQLite 等边界依赖和第三方库。AST 同时检查 TYPE_CHECKING 分支、相对导入、已知动态 import / eval / exec，运行测试另用独立解释器拦截传输依赖和服务启动。静态检查不是恶意 Python 沙盒，不能证明不存在所有反射或动态绕过；测试文件中的坏样例只解析、不导入。
+核心允许符合分层规则的标准库与向内的 framework 导入；显式拒绝 HTTP / socket / SQLite 等边界依赖和第三方库，标准库中的 xmlrpc / wsgiref 也属于 HTTP 边界。按[运行时设计第 4 节](05-runtime-coordination.md)，纯领域另外拒绝 threading、_thread、asyncio、concurrent 和 multiprocessing；该限制不禁止应用协调层使用并发机制。
+
+AST 同时检查 TYPE_CHECKING 分支、函数内和相对导入、已知动态 import / eval / exec，运行测试另用独立解释器拦截传输依赖和服务启动。静态检查不是恶意 Python 沙盒，不能证明不存在所有反射、标准库间接路径或动态绕过；测试文件中的坏样例只解析、不导入。此次补漏的失败证据见 [AR-0006](../project/records/AR-0006-foundation-boundary-review.md)。
 
 ## 3. 时钟语义
 
 - MonotonicInstant(clock_id, tick_ns) 是不可变普通领域值；tick_ns 为内部精确整数纳秒，不是公开命令时间字段，也不是设备 / 仿真时间映射。
-- clock_id 必须是非空字符串；tick_ns 必须为非负 int，bool、浮点、NaN / Infinity、负数不能混入。没有实现通用 robot / frame / tool 标识或目标数值类型，留给 DEV-M1-03。
+- clock_id 必须是非空字符串；tick_ns 必须为非负 int，bool、浮点、NaN / Infinity、负数不能混入。robot / device / frame / tool 标识和目标数值使用独立的[基础类型规范](07-domain-types-and-geometry.md)，不复用 clock_id。
 - elapsed_ns_since 只允许同 clock_id 且后读数不早于前读数；跨时钟域、逆序或非领域对象显式报错，不猜测偏移、不返回默认零。相等时已知经过时间为零，不等于填补未知反馈。
 - SystemMonotonicClock 用标准库 monotonic_ns，构造时生成本次对象的 clock_id；组装入口应构造一个并共享，不在每条命令上重建。原点不承诺跨进程 / 跨重启可复用，不读 wall clock，不据此声称硬实时。
 - ManualMonotonicClock 只由 advance_ns 显式推进，可推进零、不能回退；旧快照保持不变。默认 0 是明确人工 fixture 初始值，不是缺失设备反馈。该对象只用于单拥有者的测试 / mock，不提供线程安全或真实保护钟保证。
@@ -57,7 +60,7 @@ uv build --no-sources --link-mode copy --default-index https://pypi.org/simple
 uv run --no-sync python -I tools/check_wheel_install.py
 ```
 
-`--no-editable` 选择非编辑 wheel 安装，pytest 检查实际导入位置和 direct_url。修改源码后用上面的 sync 命令刷新并重装本地分发，再运行测试。复制模式解决了本轮 Windows 缓存安装时的文件访问错误，复验过程见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)。
+`--no-editable` 选择非编辑 wheel 安装，pytest 检查实际导入位置和 direct_url。修改源码后用上面的 sync 命令刷新并重装本地分发，再运行测试。复制模式解决了原 Windows 基线中缓存安装时的文件访问错误，复验过程见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)。
 
 `check_wheel_install.py` 在仓库外创建一次性空环境，禁止从索引取包，使用 --offline --no-index --no-deps 安装本地 wheel，并要求环境中只有本工程分发。它是安装探测脚本，不是设备启动器；只能清理其自己创建的临时目录。dist 有多个工程 wheel 时必须显式传路径，不默选旧产物。
 
@@ -81,7 +84,10 @@ uv run --offline --no-sync python -I tools/check_runtime_design.py
 | T26/package | 精确解释器、元数据、零运行依赖、非源码 / 非编辑位置、仓库外隔离导入；另在真正空消费者环境离线安装 wheel | 没有 wheel / 没有安装时不能靠语法检查算 PASS |
 | T26/imports | 核心源码 AST、相对 / 间接导入和坏样例、独立进程实际导入时拒绝传输栈 / 服务启动 | AST 静态通过不等于运行导入测试已运行 |
 | T26/ports-clock | 端口返回普通类型、非法时钟值、不可变快照、显式推进 / 回退拒绝、时钟域隔离、系统单调读数 | 不证明租约、命令期限、静止窗口或真实设备保护 |
+| T28/values | 独立标识、作用域 frame、必填工具目标、不可变数组拷贝、SI 换算、有限数与维度 | 不证明绑定、工具配置、工作空间或碰撞策略 |
+| T28/basis | T_A_B 的点 / 方向 / 姿态、逆变换、非交换变换组合和错帧拒绝 | 不证明变换来源、时间、标定或有效性 |
+| T28/quaternion | xyzw、q / -q 等价、先 other 后 self 的组合、范数闭区间及有限结果 / 溢出 | 不证明 XR 基变换、跟踪或重定位 |
 
-三个 T26 切片的结果摘要见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)。DEV-M1-03 的基础类型和 T28 切片列于 [I01](../project/iterations/I01-M1-foundation.md)。
+三个 T26 与三个 T28 切片的最新结果见 [AR-0011](../project/records/AR-0011-domain-foundation-final.md)。DEV-M1-03 的基础类型规范见[专题设计](07-domain-types-and-geometry.md)，I01 仍需能力组合与只读发现的四个切片。
 
-设计取舍：只实现必要的时钟端口，不凭尚未实现的目标 / 命令类型预造 Planner / Backend 签名；人工钟显式位于适配层、不进领域；无运行第三方依赖；pytest 仅为开发依赖。独立复核和产品验收仍待指定。本轮不增加公共命令状态，不降低已有 AC。
+设计取舍：时钟端口只保留必要操作，不为未来命令类型预造 Planner / Backend 签名；人工钟显式位于适配层、不进领域；无运行第三方依赖；pytest 仅为开发依赖。各次独立代码复核见对应 AR，产品验收角色仍待指定。本轮不增加公共命令状态，不降低已有 AC。
