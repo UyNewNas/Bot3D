@@ -2,7 +2,7 @@
 
 - 日期：2026-11-20
 - 工作包：DEV-M1-02；I01 的最小工程切片
-- 当前边界：已验证 Python 包、时钟和基础领域值；最新 T26 / T28 与独立安装复验见 [AR-0011](../project/records/AR-0011-domain-foundation-final.md)，依赖检查补漏见 [AR-0007](../project/records/AR-0007-foundation-boundary-recheck.md)，原 Windows 基线见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)
+- 当前边界：已验证 Python 包、时钟、基础领域值、能力组合与只读 Registry；最新十个切片与独立安装复验见 [AR-0015](../project/records/AR-0015-readonly-registry-batch-final.md)，依赖检查补漏见 [AR-0007](../project/records/AR-0007-foundation-boundary-recheck.md)，原 Windows 基线见 [AR-0005](../project/records/AR-0005-python-foundation-recheck.md)
 - 关联：[运行时详细设计](05-runtime-coordination.md)、[基础类型与坐标数学](07-domain-types-and-geometry.md)、[项目入口](../project/README.md)、[仓库运行说明](../../README.md)
 
 ## 1. 版本决策
@@ -23,13 +23,16 @@
 
 ## 2. 最小布局与依赖方向
 
-分发名为 bot3d-kernel，导入名为 framework，沿用架构的 src/framework 建议。只创建本轮实际使用的包，不建立网关、Registry、Planner、Backend、Journal、数据库或 bootstrap 空壳。
+分发名为 bot3d-kernel，导入名为 framework，沿用架构的 src/framework 建议。只创建实际使用的模块；Registry 与只读端口已有实现，网关、规划 / 执行端口、Journal、数据库和 bootstrap 按后续任务建立。
 
 - [领域时间值](../../src/framework/domain/time.py)：冻结的 MonotonicInstant 与跨时钟错误；只依赖 dataclasses。
 - [标识与 SI 值](../../src/framework/domain/values.py)、[坐标数学](../../src/framework/domain/geometry.py)、[位姿目标](../../src/framework/domain/targets.py)：DEV-M1-03 的不可变值与纯数学；具体 API、方向和数值边界见[专题设计](07-domain-types-and-geometry.md)。
-- [应用时钟端口](../../src/framework/application/ports.py)：MonotonicClock Protocol，只有 now()，返回普通领域值；不携带 HTTP DTO、SDK / ROS 对象。
+- [能力组合](../../src/framework/domain/capabilities.py)与[只读数据](../../src/framework/domain/discovery.py)：DEV-M1-04 的能力版本、原因、身份和最小观测切片，接口见[专题设计](08-readonly-registry-and-capabilities.md)。
+- [应用读取端口](../../src/framework/application/ports.py)：MonotonicClock 只有 now()，ReadOnlyBackend 只有 describe() / read_state()；都返回普通领域值，不携带 HTTP DTO、SDK / ROS 对象。
+- [只读 Registry](../../src/framework/application/registry.py)：同步内存注册、发现、身份一致性检查和每绑定能力版本；不暴露控制句柄。
 - [时钟适配器](../../src/framework/adapters/clocks.py)：SystemMonotonicClock 与明确注入的 ManualMonotonicClock；不启动服务或设备连接。
-- [单元测试](../../tests/)：包安装、依赖边界、端口与时钟三个 T26 切片，以及值、基准变换和四元数三个 T28 切片；fixture 按函数创建，无全局共享时钟。
+- [只读 SIM mock](../../src/framework/adapters/mock_robot.py)：固定身份与观测样例，执行前提固定为 False，无外部连接或控制入口。
+- [单元测试](../../tests/)：T26 三个工程切片、T28 三个类型 / 数学切片，以及 T29 / T46 四个能力 / 只读切片；fixture 按函数创建，无全局共享时钟。
 - [依赖检查器](../../tools/check_import_boundaries.py)：只读 AST 检查，核心为 root / domain / application；适配层可向内，不被内核反向导入。
 - [独立 wheel 消费者检查](../../tools/check_wheel_install.py)：仓库外临时空 venv、无 pip / pytest、离线安装本地 wheel，再用 -I 导入与探测；未构建时不能运行成功。
 
@@ -87,7 +90,11 @@ uv run --offline --no-sync python -I tools/check_runtime_design.py
 | T28/values | 独立标识、作用域 frame、必填工具目标、不可变数组拷贝、SI 换算、有限数与维度 | 不证明绑定、工具配置、工作空间或碰撞策略 |
 | T28/basis | T_A_B 的点 / 方向 / 姿态、逆变换、非交换变换组合和错帧拒绝 | 不证明变换来源、时间、标定或有效性 |
 | T28/quaternion | xyzw、q / -q 等价、先 other 后 self 的组合、范数闭区间及有限结果 / 溢出 | 不证明 XR 基变换、跟踪或重定位 |
+| T29/compose | 五前提组合、全部不可用原因与具体值类型 | 人工全可用输入不授予 mock 执行能力 |
+| T29/revision | 初值、等价读、原因 / 配置 / 模式变化、A→B→A 与不可变快照 | 不推断后端未声明的配置变化 |
+| T46/discovery | 注册 / 描述 / 状态、完整身份漂移拒绝、镜像独立版本、重复与失败不覆盖 | 不证明运行时 epoch 轮转、设备核验或持久化 |
+| T46/readonly | mock 与 Registry 都无执行能力、子类边界、未知 / 空观测、零控制调用 | 不证明真实停车或完整 StateProjection |
 
-三个 T26 与三个 T28 切片的最新结果见 [AR-0011](../project/records/AR-0011-domain-foundation-final.md)。DEV-M1-03 的基础类型规范见[专题设计](07-domain-types-and-geometry.md)，I01 仍需能力组合与只读发现的四个切片。
+I01 十个切片的最新结果见 [AR-0015](../project/records/AR-0015-readonly-registry-batch-final.md)。基础类型和只读 Registry 分别见[类型设计](07-domain-types-and-geometry.md)与[能力 / 发现设计](08-readonly-registry-and-capabilities.md)；产品验收仍为 PENDING。
 
 设计取舍：时钟端口只保留必要操作，不为未来命令类型预造 Planner / Backend 签名；人工钟显式位于适配层、不进领域；无运行第三方依赖；pytest 仅为开发依赖。各次独立代码复核见对应 AR，产品验收角色仍待指定。本轮不增加公共命令状态，不降低已有 AC。

@@ -20,12 +20,18 @@ from pathlib import Path
 import platform
 import sys
 import framework
+from framework.adapters.mock_robot import ReadOnlyMockBackend
+from framework.application.registry import RobotRegistry
+from framework.domain.capabilities import CapabilityInputs, UnavailableReason
+from framework.domain.discovery import (
+    BackendDescription, BackendIdentity, BackendKind, BackendState, MotionState, ReadOnlyObservation,
+)
 from framework.adapters.clocks import ManualMonotonicClock, SystemMonotonicClock
 from framework.application.ports import MonotonicClock
 from framework.domain.time import MonotonicInstant, ClockDomainMismatch
 from framework.domain.geometry import Quaternion, RigidTransform
 from framework.domain.targets import PoseGoal
-from framework.domain.values import FrameId, RobotId, ToolId, Vector3, mm_to_m
+from framework.domain.values import DeviceId, FrameId, RobotId, ToolId, Vector3, mm_to_m
 names = {item.metadata['Name'].casefold() for item in metadata.distributions()}
 assert names == {'bot3d-kernel'}, names
 assert metadata.version('bot3d-kernel') == sys.argv[1]
@@ -54,8 +60,22 @@ assert moved.position_m.as_tuple() == (2.0, 2.0, 3.0)
 assert moved.orientation_xyzw == identity
 assert goal.frame_id == base
 assert sys.version_info[:2] == (3, 12)
+backend = BackendIdentity(DeviceId('mock-device-a'), 'mock-backend-a', BackendKind.SIM, 'fixture-epoch-a')
+inputs = CapabilityInputs(True, True, True, True, True, 'fixture-config-1', None)
+unknown = ReadOnlyObservation(None, MotionState.UNKNOWN, None, None)
+mock = ReadOnlyMockBackend(BackendDescription(backend, 'Fixture arm', inputs), BackendState(backend, unknown))
+registry = RobotRegistry()
+registered = registry.register(robot, mock)
+assert registry.discover() == (registered,)
+state = registry.read_state(robot)
+assert registered.binding.robot_id == robot and registered.binding.backend == backend
+assert state.binding == registered.binding and state.observation == unknown
+assert state.capability_revision == registered.capabilities.revision == 1
+assert registered.capabilities.pose_goal.available is False
+assert registered.capabilities.pose_goal.reasons == (UnavailableReason.EXECUTION_UNAVAILABLE,)
 print('PASS: clean wheel consumer; only bot3d-kernel installed; no source path or runtime dependencies.')
 print('PASS: typed goal and framed transform work in the clean consumer.')
+print('PASS: read-only registry preserves mock identity and unknown feedback.')
 print('INFO: consumer Python ' + platform.python_version() + '; no device connection.')
 '''
 

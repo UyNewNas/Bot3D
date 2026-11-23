@@ -30,6 +30,10 @@ markers = [
   "t28_values: typed identifiers, finite values, units, and scoped goals",
   "t28_basis: framed rigid transforms, points, and basis directions",
   "t28_quaternion: quaternion representation, rotation, and validation",
+  "t29_compose: pure effective pose-goal capability composition",
+  "t29_revision: semantic revisions of capability snapshots",
+  "t46_discovery: identity-consistent read-only robot discovery",
+  "t46_readonly: read-only mock and observation validation",
 ]
 
 [tool.uv]

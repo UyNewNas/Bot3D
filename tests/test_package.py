@@ -39,10 +39,16 @@ def test_package_origin_is_installed_not_the_source_checkout():
 def test_isolated_import_from_outside_the_repository(tmp_path):
     code = '''
 import framework
+from framework.adapters.mock_robot import ReadOnlyMockBackend
+from framework.application.registry import RobotRegistry
+from framework.domain.capabilities import CapabilityInputs, UnavailableReason
+from framework.domain.discovery import (
+    BackendDescription, BackendIdentity, BackendKind, BackendState, MotionState, ReadOnlyObservation,
+)
 from framework.domain.time import MonotonicInstant
 from framework.domain.geometry import Quaternion, RigidTransform
 from framework.domain.targets import PoseGoal
-from framework.domain.values import FrameId, RobotId, ToolId, Vector3
+from framework.domain.values import DeviceId, FrameId, RobotId, ToolId, Vector3
 from framework.application.ports import MonotonicClock
 from framework.adapters.clocks import ManualMonotonicClock, SystemMonotonicClock
 clock = ManualMonotonicClock(clock_id='isolated-wheel')
@@ -55,6 +61,20 @@ identity = Quaternion.from_xyzw((0, 0, 0, 1))
 goal = PoseGoal(RobotId('arm-fixture'), base, ToolId('tool0'), Vector3(1, 0, 0), identity)
 moved = goal.transformed(RigidTransform(world, base, Vector3(1, 2, 3), identity))
 assert (moved.frame_id, moved.position_m.as_tuple()) == (world, (2.0, 2.0, 3.0))
+robot = RobotId('arm-fixture')
+backend = BackendIdentity(DeviceId('mock-device-a'), 'mock-backend-a', BackendKind.SIM, 'fixture-epoch-a')
+inputs = CapabilityInputs(True, True, True, True, True, 'fixture-config-1', None)
+unknown = ReadOnlyObservation(None, MotionState.UNKNOWN, None, None)
+mock = ReadOnlyMockBackend(BackendDescription(backend, 'Fixture arm', inputs), BackendState(backend, unknown))
+registry = RobotRegistry()
+registered = registry.register(robot, mock)
+assert registry.discover() == (registered,)
+state = registry.read_state(robot)
+assert registered.binding.robot_id == robot and registered.binding.backend == backend
+assert state.binding == registered.binding and state.observation == unknown
+assert state.capability_revision == registered.capabilities.revision == 1
+assert registered.capabilities.pose_goal.available is False
+assert registered.capabilities.pose_goal.reasons == (UnavailableReason.EXECUTION_UNAVAILABLE,)
 print('isolated installed package import OK')
 '''
     result = subprocess.run([sys.executable, '-I', '-c', code], cwd=tmp_path,

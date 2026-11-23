@@ -1,10 +1,10 @@
 # I01：内核基础与只读发现
 
 - 建立日期：2026-11-20
-- 迭代状态：ACTIVE
+- 迭代状态：IN_ACCEPTANCE
 - 闸门：G-I01；不等于 G-M1
-- 独立复核 / 验收角色待指定
-- 当前事实：DEV-M1-01 设计交付见 [AR-0003](../records/AR-0003-runtime-design.md)，DEV-M1-02 工程修正见 [AR-0007](../records/AR-0007-foundation-boundary-recheck.md)，DEV-M1-03 基础类型与最新回归见 [AR-0011](../records/AR-0011-domain-foundation-final.md)。下一项为 DEV-M1-04
+- 技术复核由独立助手完成；产品验收角色待指定
+- 当前事实：DEV-M1-01 设计交付见 [AR-0003](../records/AR-0003-runtime-design.md)，DEV-M1-02 工程修正见 [AR-0007](../records/AR-0007-foundation-boundary-recheck.md)，DEV-M1-03 基础类型见 [AR-0011](../records/AR-0011-domain-foundation-final.md)，DEV-M1-04 与最新十个切片回归见 [AR-0015](../records/AR-0015-readonly-registry-batch-final.md)。四个工作包已交付，产品验收 PENDING
 - 权威状态：[开发台账](../backlog.md)；需求映射只见[追踪矩阵](../requirements.md)
 
 ## 1. 目标与范围
@@ -44,7 +44,7 @@
 
 ## 4. 必验切片
 
-本轮共十个 UNIT / MOCK 切片。三个 T26 和三个 T28 切片已通过，复现命令和结果见 [AR-0011](../records/AR-0011-domain-foundation-final.md)；T29 / T46 的四个切片仍为 NOT_RUN。
+本轮共十个 UNIT / MOCK 切片，现已全部通过；T26 / T28 回归和新增 T29 / T46 的复现命令、实际数量及安装证据见 [AR-0015](../records/AR-0015-readonly-registry-batch-final.md)。技术出口齐备不代替 G-I01 的产品验收。
 
 | 测试 / 子场景 | 必须证据 |
 | --- | --- |
@@ -67,4 +67,4 @@
 
 G-I01 出口：四个工作包交付及针对性检查有记录；十个切片全部通过；DOC 设计评审的阻断问题已处置；运行说明、版本、已知限制完整；指定验收角色独立判定。缺少验收者时产品验收保持 PENDING，迭代不 CLOSED。失败保留 DEF，修复新增 AR；范围 / 契约变化走 CHG。
 
-DEV-M1-03 已交付，DEV-M1-04 的能力组合与只读发现仍待交付；G-I01 验收 PENDING。I02 在后续轮次定义。
+DEV-M1-01—04 均已交付，十个技术切片通过，I01 为 IN_ACCEPTANCE；G-I01 验收 PENDING，G-M1 未关闭。I02 在后续轮次锁定租约、状态投影和 mock 执行 / 停止范围，再从 DEV-M1-05 进入实现。
