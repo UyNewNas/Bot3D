@@ -1,9 +1,9 @@
 # 开发台账
 
 - 更新日期：2026-11-23
-- 当前状态：16 项 TODO、2 项 DONE、13 项 DRAFT、2 项 DEFERRED；没有 DOING 项
+- 当前状态：15 项 TODO、3 项 DONE、13 项 DRAFT、2 项 DEFERRED
 - 权威范围：本文件维护开发交付物、依赖和开发状态；需求与测试映射只维护在[追踪矩阵](requirements.md)
-- 当前选择：[I01](iterations/I01-M1-foundation.md)；DEV-M1-01 和 DEV-M1-02 已 DONE，下一项 DEV-M1-03 为 TODO。工程基础复验见 [AR-0005](records/AR-0005-python-foundation-recheck.md)
+- 当前选择：[I01](iterations/I01-M1-foundation.md)；DEV-M1-01—DEV-M1-03 已 DONE，下一项为 DEV-M1-04。基础类型与工程回归见 [AR-0011](records/AR-0011-domain-foundation-final.md)
 
 ## 1. 使用规则
 
@@ -20,8 +20,8 @@ M1 不依赖 ROS、Gazebo、Unity 或厂商 SDK。普通领域类型与端口保
 | 开发 ID | 状态 | 交付物与完成条件 | 前置开发 |
 | --- | --- | --- | --- |
 | DEV-M1-01 | DONE | [详细设计与决策记录](../design/05-runtime-coordination.md)、[DOC 检查记录](records/AR-0003-runtime-design.md)已交付；范围：状态 / 确定性转换表、业务槽与物理执行锁、STOP / CANCEL / UNKNOWN、最后下发边界、待下发撤销、接受 / 意图 / 外部受理顺序、崩溃点与对账；给出 T31 / T34 可执行测试设计。明确 epoch 不等于下游 fencing，不擅自增加公共命令状态；评审未决项与结论可追溯 | 无 |
-| DEV-M1-02 | DONE | 已交付最小 Python 工程、纯领域 / 应用端口、可控单调时钟与测试基础。[工程基线](../design/06-python-foundation.md)固定 Python 3.12.11、开发依赖和复现命令，包安装 / 导入与依赖边界见 [AR-0005](records/AR-0005-python-foundation-recheck.md) | DEV-M1-01 |
-| DEV-M1-03 | TODO | 实现标识、带作用域目标、工具 / 单位、有限数与四元数等基础类型；固定 T28 基准点、轴、姿态和非法值数据；拒绝非法值，不将未知反馈填零 | DEV-M1-02 |
+| DEV-M1-02 | DONE | 已交付最小 Python 工程、纯领域 / 应用端口、可控单调时钟与测试基础。[工程基线](../design/06-python-foundation.md)固定 Python 3.12.11、开发依赖和复现命令，包安装 / 导入与依赖边界见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md) | DEV-M1-01 |
+| DEV-M1-03 | DONE | 已交付[标识 / SI 值、四元数 / 刚体变换与带工具目标](../design/07-domain-types-and-geometry.md)；三个 T28 切片使用独立基准点、轴、姿态和非法值断言，拒绝缺失与非法值，不填默认反馈；数值边界修正与工程回归见 [AR-0011](records/AR-0011-domain-foundation-final.md) | DEV-M1-02 |
 | DEV-M1-04 | TODO | 实现 Registry 的身份 / 只读绑定模型、有效能力组合、能力版本与原因；交付只读 mock 的发现、描述和状态样例。只读对象不暴露可调用执行能力；没有执行链时 pose_goal 不可用；执行和切换留给后续任务 | DEV-M1-03 |
 | DEV-M1-05 | TODO | 实现单写租约、显式激活与前置策略；租约绑定会话 / robot / epoch，按单调时钟续期 / 到期；READY、ARMED、运动状态分开；失权事件可进入停止用例，未结执行未处置时不能发放可执行控制流 | DEV-M1-04 |
 | DEV-M1-06 | TODO | 实现 JournalPort、执行语义规范化摘要与内存测试替身；键为 robot_id＋command_id，request_id 不入摘要；覆盖同键重试和异摘要冲突；明确保留窗口接口，不把内存结果称为持久化保证 | DEV-M1-03 |
@@ -70,4 +70,4 @@ M1 不依赖 ROS、Gazebo、Unity 或厂商 SDK。普通领域类型与端口保
 
 ## 4. 本轮交接
 
-DEV-M1-01 的详细设计与 DOC 检查见 [AR-0003](records/AR-0003-runtime-design.md)。DEV-M1-02 的安装、依赖边界和时钟测试见 [AR-0005](records/AR-0005-python-foundation-recheck.md)。I01 下一项为 DEV-M1-03 基础类型，当前为 TODO。
+DEV-M1-01 的详细设计与 DOC 检查见 [AR-0003](records/AR-0003-runtime-design.md)。DEV-M1-02 的依赖边界修正见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md)。DEV-M1-03 基础类型及最新 T26 / T28 复验见 [AR-0011](records/AR-0011-domain-foundation-final.md)。下一项 DEV-M1-04 为 TODO；I01 尚需 T29 / T46 四个切片。

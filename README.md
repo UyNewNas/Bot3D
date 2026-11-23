@@ -1,54 +1,134 @@
-# Bot3D 内核基础
+# Bot3D
 
-当前只建立 DEV-M1-02 的最小可安装 Python 包、时钟领域值 / 应用端口及单元测试基础。没有 Registry、目标 / 四元数类型、运动协调器、ROS / SDK 连接或设备控制入口。架构与跟踪从[文档入口](docs/README.md)进入。
+**面向机器人仿真、真机与 XR 交互的任务协调框架。** Bot3D 以机器人能力、任务目标和状态反馈为应用接口，目标是让同一套任务流程可以在不同后端上复用。设备之间的差异由适配器、机器人模型、配置和标定处理。
 
-**当前状态：DEV-M1-02 已完成。** 在 Windows 11／CPython 3.12.11 上完成非编辑安装、三个 T26 切片和独立 wheel 消费者验证。
+[技术架构](#技术架构) · [实现方式](#实现方式) · [快速上手](#快速上手) · [开发路线](#开发路线) · [文档入口](docs/README.md)
 
-## 开发环境
+## 项目目标
 
-- 本轮复现：CPython 3.12.11、uv 0.10.9；产品 Python minor 选择 3.12，默认系统 3.13 不作为替代。
-- 运行依赖为空；pytest 与构建工具固定在 [pyproject.toml](pyproject.toml)，完整开发依赖解析见 [uv.lock](uv.lock)。
-- 使用项目虚拟环境，不修改系统解释器；本轮 patch 是复现版本，不是最新安全版本或生产 / REAL 准入声明。版本决策、限制和证据见[工程基线](docs/design/06-python-foundation.md)。
+以固定基座机械臂为例，桌面应用和 XR 前端可以用同一个目标表达「让工具到达指定坐标系下的位姿」。切换到另一后端时，应用保留相同的任务逻辑，框架根据当前绑定的设备、模型和场景重新检查能力并规划。前端分别显示目标、计划和后端反馈，让操作者看清机器人实际到达的位置。
 
-在仓库根目录运行：
+- **按能力表达任务。** 末端位姿、夹爪等能力有各自的参数、约束和可用条件。上层可以据此选择可执行的任务，并读到能力不可用的原因。
+- **显式选择仿真或真机。** 每台逻辑机器人绑定一个执行后端，应用能看到当前是 SIM 还是 REAL，以及对应的设备身份。执行和反馈都归属该绑定。
+- **让设备接入集中在边界。** 内核使用普通 Python 值与端口，适配层负责映射 ROS 消息、厂商接口、引擎坐标和单位。
 
-```bash
-uv sync --locked --no-editable --reinstall-package bot3d-kernel --link-mode copy --default-index https://pypi.org/simple
-uv run --no-sync python -I -m pytest
-uv run --no-sync python -I tools/check_import_boundaries.py
-uv build --no-sources --link-mode copy --default-index https://pypi.org/simple
-uv run --no-sync python -I tools/check_wheel_install.py
+首条验证路径选用单机械臂的离散末端位姿任务，覆盖目标预览、规划、执行反馈和停止。[项目范围与设计原则](docs/design/01-principles-and-scope.md)
+
+## 技术架构
+
+Bot3D 采用分层设计。Python 内核保存跨后端通用的领域语义，规划中的模块化单体协调会话、控制权和命令生命周期，外部适配器连接规划器、仿真器和设备。电机闭环由设备侧驱动和控制器处理。
+
+```mermaid
+flowchart TB
+    Client["桌面应用 / XR（规划）"] -.-> Gateway["HTTP / WebSocket 网关（规划）"]
+    Gateway -.-> Coordinator["应用协调（规划）"]
+    Coordinator -.-> Domain["领域层 · 标识、几何、时间"]
+    Coordinator -.-> RobotPorts["规划、执行与反馈端口（规划）"]
+    Coordinator -.-> ClockPort["应用层 · 单调时钟端口"]
+    RobotAdapters["ROS 2 / MoveIt 2 / Gazebo（规划）"] -.-> RobotPorts
+    RobotPorts -.-> Domain
+    ClockAdapters["系统 / 人工时钟适配器"] --> ClockPort
+    ClockPort --> Domain
 ```
 
-`--no-editable` 安装构建出的包，`--reinstall-package bot3d-kernel` 在源码修改后刷新并重装本地分发，测试使用隔离解释器 `-I`。`--link-mode copy` 用于本轮 Windows 环境。解释器与开发、构建依赖均已缓存时，sync 和 build 可加 `--offline`。
+实线连接现有模块，虚线表示规划中的依赖。各层通过领域值和端口交互，适配器依赖内核。首条集成路径优先考虑 ROS 2、MoveIt 2 和 Gazebo，XR 前端候选为 Unity + OpenXR。[完整架构、组件职责与数据路径](docs/design/02-system-architecture.md)
 
-## 最小 API
+### 末端目标如何执行
+
+1. **预览与提交。** 前端将输入转成指定坐标系下的工具位姿，经确认后提交任务，携带设备绑定和场景版本。
+2. **检查与规划。** 协调层检查能力、控制权和上下文，规划器按当前模型与场景生成轨迹。
+3. **下发与反馈。** 协调层复核执行前提并经唯一执行路径下发。后端报告实际状态，前端据此更新显示。
+
+这是首条集成路径的设计流程。MoveIt 2 负责规划，执行适配器负责下发轨迹。[命令、状态与适配器契约](docs/design/03-contracts-and-adapters.md)
+
+## 实现方式
+
+当前仓库提供可从源码安装的 Python 内核。运行只用标准库，构建和测试的开发依赖分别由项目元数据和锁文件固定。
+
+| 模块 | 当前实现 |
+| --- | --- |
+| `framework.domain` | 不可变的机器人、设备、坐标系与工具标识，有限数向量、显式 SI 单位换算、四元数、刚体变换、带工具的位姿目标，以及单调时刻值。 |
+| `framework.application` | `MonotonicClock` 端口，调用方通过 `now()` 获取带时钟域的读数。 |
+| `framework.adapters` | 系统时钟和显式推进的人工时钟。测试注入人工时钟即可验证时间相关逻辑，无需等待。 |
+
+位姿目标以米表示位置，方向采用右手主动旋转与 `xyzw` 四元数。变换带源坐标系和目标坐标系，组合变换或转换目标时会检查坐标系是否匹配。数值构造拒绝非有限分量，单位换算在边界显式进行。[基础类型与坐标数学](docs/design/07-domain-types-and-geometry.md)
+
+## 快速上手
+
+使用 **CPython 3.12.11** 和 **uv 0.10.9**。分发名称为 `bot3d-kernel`，Python 导入名称为 `framework`。
+
+```bash
+git clone https://github.com/UyNewNas/Bot3D.git
+cd Bot3D
+uv sync --locked --no-editable --reinstall-package bot3d-kernel --link-mode copy --default-index https://pypi.org/simple
+```
+
+同步命令将构建出的包安装到项目虚拟环境。修改源码后，重新同步即可刷新安装包。[环境与构建细节](docs/design/06-python-foundation.md)
+
+### 将末端目标从基座坐标系转换到世界坐标系
+
+以下例子将工具目标设在基座 X 轴方向的 250 mm 处。基座相对世界坐标系绕 Z 轴旋转 90°，原点在世界坐标 `(1, 2, 3)` 米处。
 
 ```python
-from framework.adapters.clocks import ManualMonotonicClock
-from framework.application.ports import MonotonicClock
-from framework.domain.time import MonotonicInstant
+from math import sqrt
 
-clock = ManualMonotonicClock(clock_id="test-protection")
-port: MonotonicClock = clock
-before: MonotonicInstant = port.now()
-clock.advance_ns(10)
-assert port.now().elapsed_ns_since(before) == 10
+from framework.domain.geometry import Quaternion, RigidTransform
+from framework.domain.targets import PoseGoal
+from framework.domain.values import FrameId, RobotId, ToolId, Vector3, mm_to_m
+
+base = FrameId("arm-fixture/base")
+world = FrameId("cell/world")
+goal = PoseGoal(
+    robot_id=RobotId("arm-fixture"),
+    frame_id=base,
+    tool_id=ToolId("tool0"),
+    position_m=Vector3(mm_to_m(250), 0, 0),
+    orientation_xyzw=Quaternion(0, 0, 0, 1),
+)
+
+sqrt_half = sqrt(0.5)
+world_from_base = RigidTransform(
+    target_frame=world,
+    source_frame=base,
+    translation_m=Vector3(1, 2, 3),
+    rotation=Quaternion(0, 0, sqrt_half, sqrt_half),
+)
+
+world_goal = goal.transformed(world_from_base)
+x, y, z = world_goal.position_m.as_tuple()
+print(f"{world_goal.frame_id.value}: ({x:.2f}, {y:.2f}, {z:.2f}) m")
+# cell/world: (1.00, 2.25, 3.00) m
 ```
 
-人工钟仅用于测试 / mock 的显式依赖注入，不是真实保护钟。真实时钟使用 `SystemMonotonicClock`；每个运行实例共享明确的时钟对象，不在每个请求上新建时钟。不同 clock_id 不可直接相减；没有实现租约 / 超时策略，时钟测试不等于 T04 / T16 / T42 已通过。
+将示例保存为 `pose_example.py`，在仓库根目录运行 `uv run --no-sync python -I pose_example.py`。转换会更新目标的位置、方向和坐标系，保留机器人与工具标识。
 
-## 检查与证据
-
-T26/package、T26/imports 和 T26/ports-clock 的复现命令与结果见 [AR-0005](docs/project/records/AR-0005-python-foundation-recheck.md)。I01 还有七个切片待执行，产品验收 PENDING。
-
-已有设计资料可另外检查：
+### 运行测试
 
 ```bash
-uv run --no-sync python -I tools/check_project_docs.py --self-test
-uv run --no-sync python -I tools/check_project_docs.py
-uv run --no-sync python -I tools/check_runtime_design.py --self-test
-uv run --no-sync python -I tools/check_runtime_design.py
+uv run --no-sync python -I -m pytest
+uv run --no-sync python -I tools/check_import_boundaries.py
 ```
 
-设计模型只算 DOC，不能代替运行时 / 停止 / 恢复产品测试。没有硬实时、持久性、设备 fencing 或停车保证；REAL 未授权。不提供通过强杀进程停车的方法。
+测试在隔离解释器中检查已安装的内核，覆盖标识、单位换算、变换方向、姿态组合和时钟域。依赖检查约束核心包的导入边界。
+
+## 开发路线
+
+当前处于内核基础与只读发现阶段。接下来将实现机器人注册表、能力描述、只读绑定和模拟状态，再验证任务协调。
+
+| 阶段 | 计划验证的能力 |
+| --- | --- |
+| Python 内核与 mock | 用可控时钟和模拟后端验证发现、控制租约、命令生命周期、停止与恢复。 |
+| ROS 2 与 Gazebo | 用 MoveIt 2 规划、单一路径执行轨迹，读取仿真反馈并验证停止。 |
+| XR 与仿真 | 通过 HTTP / WebSocket 接入桌面与 Unity + OpenXR，复用目标契约，展示预览、计划和反馈。 |
+| 真机与第二后端 | 按设备准入流程验证同一任务在仿真与真机中的表现，并检查迁移到第二后端时的适配范围。 |
+
+[当前迭代](docs/project/iterations/I01-M1-foundation.md) · [开发台账](docs/project/backlog.md) · [实施与验证路线](docs/design/04-delivery-and-validation.md)
+
+## 文档导航
+
+| 想了解 | 从这里开始 |
+| --- | --- |
+| 项目边界和技术选型 | [设计原则](docs/design/01-principles-and-scope.md) · [技术调研](docs/research/technology-survey.md) |
+| 开发应用或适配器 | [领域契约](docs/design/03-contracts-and-adapters.md) · [坐标数学](docs/design/07-domain-types-and-geometry.md) |
+| 命令协调、停止和恢复的设计 | [运行时协调](docs/design/05-runtime-coordination.md) |
+| 各迭代的测试与交付进度 | [项目跟踪](docs/project/README.md) |

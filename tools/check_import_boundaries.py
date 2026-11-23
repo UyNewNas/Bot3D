@@ -2,8 +2,9 @@
 """Read-only dependency checks for the implemented pure core, not a sandbox.
 
 The domain/application packages and package root may use permitted standard
-library modules and inward core imports. Adapters are intentionally outside this
-rule. Known dynamic-import and executable-code escape forms are rejected, but
+library modules and inward core imports. Concurrency belongs to the application
+layer, not the pure domain. Adapters are intentionally outside this rule.
+Known dynamic-import and executable-code escape forms are rejected, but
 this static policy does not prove the absence of all malicious Python behavior.
 """
 from __future__ import annotations
@@ -16,8 +17,9 @@ import sys
 
 FORBIDDEN_STDLIB = {
     'http', 'urllib', 'socket', 'ssl', 'sqlite3', 'dbm', 'subprocess',
-    'ctypes', 'importlib', 'builtins',
+    'ctypes', 'importlib', 'builtins', 'xmlrpc', 'wsgiref',
 }
+DOMAIN_FORBIDDEN_STDLIB = {'threading', '_thread', 'asyncio', 'concurrent', 'multiprocessing'}
 DYNAMIC_CALLS = {'__import__', 'eval', 'exec', 'compile'}
 ALLOWED_INTERNAL = {
     'root': ('framework.domain', 'framework.application'),
@@ -38,6 +40,8 @@ def import_violations(source: str, module: str, *, layer: str, is_package: bool 
         root = target.split('.', 1)[0]
         if root in FORBIDDEN_STDLIB:
             issues.append((line, f'core must not depend on {root}'))
+        elif layer == 'domain' and root in DOMAIN_FORBIDDEN_STDLIB:
+            issues.append((line, f'pure domain must not depend on concurrency module {root}'))
         elif root == 'framework':
             if not any(target == prefix or target.startswith(prefix + '.')
                        for prefix in ALLOWED_INTERNAL[layer]):
@@ -104,6 +108,8 @@ def self_test() -> int:
         ('from .time import MonotonicInstant', 'domain', False),
         ('from ..domain.time import MonotonicInstant', 'application', False),
         ('from typing import Protocol', 'application', False),
+        ('import asyncio', 'application', False),
+        ('from threading import Lock', 'application', False),
         ('import rclpy', 'domain', True),
         ('import fastapi', 'domain', True),
         ('import pydantic', 'application', True),
@@ -111,6 +117,15 @@ def self_test() -> int:
         ('import http.client', 'domain', True),
         ('import sqlite3', 'application', True),
         ('import socket', 'domain', True),
+        ('import xmlrpc.client', 'root', True),
+        ('from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from xmlrpc.client import ServerProxy', 'domain', True),
+        ('def connect():\n    import xmlrpc.client as rpc', 'application', True),
+        ('from wsgiref.simple_server import make_server', 'application', True),
+        ('from threading import Lock', 'domain', True),
+        ('import _thread as threads', 'domain', True),
+        ('from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    import asyncio', 'domain', True),
+        ('def build_executor():\n    from concurrent.futures import ThreadPoolExecutor', 'domain', True),
+        ('from multiprocessing import Process', 'domain', True),
         ('from framework.adapters import clocks', 'application', True),
         ('from ..application import ports', 'domain', True),
         ('from ... import outside', 'domain', True),

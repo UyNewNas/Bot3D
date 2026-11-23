@@ -23,6 +23,9 @@ import framework
 from framework.adapters.clocks import ManualMonotonicClock, SystemMonotonicClock
 from framework.application.ports import MonotonicClock
 from framework.domain.time import MonotonicInstant, ClockDomainMismatch
+from framework.domain.geometry import Quaternion, RigidTransform
+from framework.domain.targets import PoseGoal
+from framework.domain.values import FrameId, RobotId, ToolId, Vector3, mm_to_m
 names = {item.metadata['Name'].casefold() for item in metadata.distributions()}
 assert names == {'bot3d-kernel'}, names
 assert metadata.version('bot3d-kernel') == sys.argv[1]
@@ -39,8 +42,20 @@ except ClockDomainMismatch:
     pass
 else:
     raise AssertionError('cross-clock arithmetic accepted')
+base = FrameId('arm-fixture/base')
+world = FrameId('cell/world')
+robot = RobotId('arm-fixture')
+tool = ToolId('tool0')
+identity = Quaternion.from_xyzw([0, 0, 0, 1])
+goal = PoseGoal(robot, base, tool, Vector3(mm_to_m(1000), 0, 0), identity)
+moved = goal.transformed(RigidTransform(world, base, Vector3(1, 2, 3), identity))
+assert (moved.robot_id, moved.frame_id, moved.tool_id) == (robot, world, tool)
+assert moved.position_m.as_tuple() == (2.0, 2.0, 3.0)
+assert moved.orientation_xyzw == identity
+assert goal.frame_id == base
 assert sys.version_info[:2] == (3, 12)
 print('PASS: clean wheel consumer; only bot3d-kernel installed; no source path or runtime dependencies.')
+print('PASS: typed goal and framed transform work in the clean consumer.')
 print('INFO: consumer Python ' + platform.python_version() + '; no device connection.')
 '''
 

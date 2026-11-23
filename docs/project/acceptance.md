@@ -61,6 +61,12 @@ M4 准入先只读，运动和故障试验再分步批准；本地停车链无�
 | AR-0003 | 2026-11-20 | DOC：DEV-M1-01 详细设计与设计级场景 | [运行时详细设计](records/AR-0003-runtime-design.md) |
 | AR-0004 | 2026-11-20 | UNIT＋DOC：DEV-M1-02 最小工程、时钟与 T26 切片 | [工程基础检查](records/AR-0004-python-foundation.md) |
 | AR-0005 | 2026-11-23 | UNIT＋DOC：DEV-M1-02 依赖准备与 T26 复验 | [工程基础复验](records/AR-0005-python-foundation-recheck.md) |
+| AR-0006 | 2026-11-23 | UNIT：DEV-M1-02 依赖检查漏检；DEF-0002 失败反例 | [依赖边界复核](records/AR-0006-foundation-boundary-review.md) |
+| AR-0007 | 2026-11-23 | UNIT＋DOC：DEF-0002 修复、T26 与独立 wheel 复验 | [依赖边界修复复验](records/AR-0007-foundation-boundary-recheck.md) |
+| AR-0008 | 2026-11-23 | UNIT：DEV-M1-03 启动与实现前 T28 证据 | [基础类型启动](records/AR-0008-domain-foundation-start.md) |
+| AR-0009 | 2026-11-23 | UNIT：DEV-M1-03 首轮实现与独立复核；有限结果的中间溢出反例 | [基础类型复核](records/AR-0009-domain-foundation-recheck.md) |
+| AR-0010 | 2026-11-23 | UNIT＋DOC：首次数值修正复验；最大有限值的舍入反例 | [数值边界复核](records/AR-0010-domain-foundation-final.md) |
+| AR-0011 | 2026-11-23 | UNIT＋DOC：极端范围精确运算、T28、安装与项目主页最终复验 | [基础类型最终复验](records/AR-0011-domain-foundation-final.md) |
 
 ## 5. 每轮记录模板
 

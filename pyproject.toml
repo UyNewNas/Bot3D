@@ -27,6 +27,9 @@ markers = [
   "t26_package: installed package and minimal distribution checks",
   "t26_imports: core dependency boundaries and their negative controls",
   "t26_ports_clock: ordinary domain time values, clock port, and deterministic clocks",
+  "t28_values: typed identifiers, finite values, units, and scoped goals",
+  "t28_basis: framed rigid transforms, points, and basis directions",
+  "t28_quaternion: quaternion representation, rotation, and validation",
 ]
 
 [tool.uv]
