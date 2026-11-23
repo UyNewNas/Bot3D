@@ -22,13 +22,16 @@ Bot3D 采用分层设计。Python 内核保存跨后端通用的领域语义，�
 flowchart TB
     Client["桌面应用 / XR（规划）"] -.-> Gateway["HTTP / WebSocket 网关（规划）"]
     Gateway -.-> Coordinator["应用协调（规划）"]
-    Coordinator -.-> Domain["领域层 · 标识、几何、时间"]
+    Coordinator -.-> Domain["领域层 · 标识、几何、时间、控制权"]
     Coordinator -.-> RobotPorts["规划与执行端口（规划）"]
     Coordinator -.-> Registry["应用层 · 只读 Registry"]
+    Coordinator -.-> Authority["应用层 · 控制权与激活"]
     Coordinator -.-> ClockPort["应用层 · 单调时钟端口"]
     Registry --> ReadPort["只读后端端口"]
     ReadMock["只读 SIM mock"] --> ReadPort
     ReadPort --> Domain
+    Authority --> Domain
+    Authority --> ClockPort
     RobotAdapters["ROS 2 / MoveIt 2 / Gazebo（规划）"] -.-> RobotPorts
     RobotPorts -.-> Domain
     ClockAdapters["系统 / 人工时钟适配器"] --> ClockPort
@@ -51,13 +54,15 @@ flowchart TB
 
 | 模块 | 当前实现 |
 | --- | --- |
-| `framework.domain` | 不可变标识、SI 值、四元数 / 刚体变换、位姿目标与单调时刻；纯能力组合、能力版本和只读身份 / 观测值。 |
-| `framework.application` | `RobotRegistry` 提供注册、发现、描述和状态查询；`ReadOnlyBackend` 只提供读操作，`MonotonicClock` 提供带时钟域的读数。 |
+| `framework.domain` | 不可变标识、SI 值、四元数 / 刚体变换、位姿目标与单调时刻；能力组合、身份 / 观测、控制租约、激活证据和前置策略。 |
+| `framework.application` | `RobotRegistry` 提供只读注册、发现和状态查询；`ControlAuthority` 管理会话租约、显式激活和失权交接；端口提供后端读操作与单调时钟。 |
 | `framework.adapters` | 系统时钟、显式推进的人工时钟和静态只读 SIM mock，供独立测试与应用接入验证使用。 |
 
 位姿目标以米表示位置，方向采用右手主动旋转与 `xyzw` 四元数。变换带源坐标系和目标坐标系，组合变换或转换目标时会检查坐标系是否匹配。数值构造拒绝非有限分量，单位换算在边界显式进行。[基础类型与坐标数学](docs/design/07-domain-types-and-geometry.md)
 
 有效能力由规划、模型、坐标、策略和执行支持共同计算。只读 Registry 始终保留缺少执行支持的原因；重复查询保持能力版本，配置、模式或可用性语义变化时递增。机器人与设备身份分开，多个只读镜像可以共享一个设备。[只读 Registry 与能力模型](docs/design/08-readonly-registry-and-capabilities.md)
+
+控制权由独立的内存管理器维护。同一设备最多配置一个可写绑定，只有已登记授权的会话能取得租约；取得租约后，还须明确确认并通过状态、标定、本地保护和停车前提，才能进入 `ARMED`。租约到期、会话失联或连续前提失效会撤权，结果保留原绑定的失权事件，供后续停止用例处理。能力上下文变化会退役旧绑定；执行影响不确定时锁住后续控制，处置后重新申请并激活。[控制权、激活与恢复边界](docs/design/09-control-authority-and-activation.md)
 
 ## 快速上手
 
@@ -145,6 +150,10 @@ print(state.observation.motion_state.value)  # UNKNOWN
 
 保存为 `readonly_example.py` 后，运行 `uv run --no-sync python -I readonly_example.py`。未知关节数据、控制模式和急停观测保留为 `None`；只读对象没有运动、停止或仿真控制方法。
 
+### 体验租约与显式激活
+
+[控制权示例](docs/design/09-control-authority-and-activation.md#6-可运行示例)用独立的人工绑定和可推进时钟，依次演示登记会话、取得租约、明确激活，以及恰好到期时撤权。示例只改变内存中的应用许可，所有肯定前提均显式提供；真实认证、状态投影与设备停止由后续接入链提供。
+
 ### 运行测试
 
 ```bash
@@ -152,11 +161,11 @@ uv run --no-sync python -I -m pytest
 uv run --no-sync python -I tools/check_import_boundaries.py
 ```
 
-测试在隔离解释器中检查已安装的内核，覆盖标识、坐标数学、时钟域、能力组合 / 版本、身份一致性和只读约束。依赖检查约束核心包的导入边界。
+测试在隔离解释器中检查已安装的内核，覆盖标识、坐标数学、时钟域、能力组合 / 版本、只读约束，以及租约竞争、显式激活、失权与执行门禁。依赖检查约束核心包的导入边界。
 
 ## 开发路线
 
-当前已提供内核基础、能力组合、只读绑定与模拟状态查询。接下来进入控制租约、状态投影、命令记录和 mock 协调链的实现，再验证执行、停止与恢复。
+当前已提供内核基础、能力组合、只读状态查询，以及会话租约、显式激活和失权交接。接下来实现命令记录、状态投影和 mock 协调链，再把执行、停止与恢复连成可验证的闭环。
 
 | 阶段 | 计划验证的能力 |
 | --- | --- |
@@ -165,13 +174,13 @@ uv run --no-sync python -I tools/check_import_boundaries.py
 | XR 与仿真 | 通过 HTTP / WebSocket 接入桌面与 Unity + OpenXR，复用目标契约，展示预览、计划和反馈。 |
 | 真机与第二后端 | 按设备准入流程验证同一任务在仿真与真机中的表现，并检查迁移到第二后端时的适配范围。 |
 
-[当前迭代](docs/project/iterations/I01-M1-foundation.md) · [开发台账](docs/project/backlog.md) · [实施与验证路线](docs/design/04-delivery-and-validation.md)
+[当前迭代](docs/project/iterations/I02-M1-control-loop.md) · [开发台账](docs/project/backlog.md) · [实施与验证路线](docs/design/04-delivery-and-validation.md)
 
 ## 文档导航
 
 | 想了解 | 从这里开始 |
 | --- | --- |
 | 项目边界和技术选型 | [设计原则](docs/design/01-principles-and-scope.md) · [技术调研](docs/research/technology-survey.md) |
-| 开发应用或适配器 | [领域契约](docs/design/03-contracts-and-adapters.md) · [坐标数学](docs/design/07-domain-types-and-geometry.md) |
+| 开发应用或适配器 | [领域契约](docs/design/03-contracts-and-adapters.md) · [坐标数学](docs/design/07-domain-types-and-geometry.md) · [控制权与激活](docs/design/09-control-authority-and-activation.md) |
 | 命令协调、停止和恢复的设计 | [运行时协调](docs/design/05-runtime-coordination.md) |
 | 各迭代的测试与交付进度 | [项目跟踪](docs/project/README.md) |

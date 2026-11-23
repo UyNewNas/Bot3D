@@ -24,6 +24,10 @@ where = ["src"]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
 markers = [
+  "t01_leases: scoped and exclusive control leases",
+  "t07_authority_loss: immutable loss effects and unresolved execution holds",
+  "t30_activation: evidence policy and explicit control activation",
+  "t42_lease_clock: monotonic expiry and clock failure",
   "t26_package: installed package and minimal distribution checks",
   "t26_imports: core dependency boundaries and their negative controls",
   "t26_ports_clock: ordinary domain time values, clock port, and deterministic clocks",

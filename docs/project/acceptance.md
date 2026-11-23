@@ -18,7 +18,7 @@
 
 所有产品闸门共同要求：已选择迭代和 AC 切片，依赖满足；代码 / 配置 / 数据版本可定位；测试参数与成功阈值已锁定；执行、复核、验收职责明确；有恢复方案。开发前置依赖不自动授予外部连接、安装、采购、Git 发布或硬件操作权限。
 
-I02 / I03 目前只有台账中的建议分配；下表规定最低出口，正式开始前仍须建立各自迭代文件和测试清单。M2 以后在实际环境可用后细化参数，但不能取消本表的必验主题。
+I02 已建立[迭代定义和测试清单](iterations/I02-M1-control-loop.md)；I03 目前只有台账中的建议分配，正式开始前仍须建立迭代文件和测试清单。下表规定最低出口。M2 以后在实际环境可用后细化参数，但不能取消本表的必验主题。
 
 | 闸门 ID | 范围 / 前置 | 必须证据与出口 |
 | --- | --- | --- |
@@ -71,6 +71,11 @@ M4 准入先只读，运动和故障试验再分步批准；本地停车链无�
 | AR-0013 | 2026-11-23 | UNIT / MOCK＋DOC：首次实现通过、子类边界复核失败 | [只读 Registry 复核](records/AR-0013-readonly-registry-review.md) |
 | AR-0014 | 2026-11-23 | UNIT / MOCK＋DOC：具体数据边界修正与工程通过、批量发现复核失败 | [只读 Registry 最终复验](records/AR-0014-readonly-registry-final.md) |
 | AR-0015 | 2026-11-23 | UNIT / MOCK＋DOC：批量发现版本修正与最终工程复验 | [只读发现最终复验](records/AR-0015-readonly-registry-batch-final.md) |
+| AR-0016 | 2026-11-23 | UNIT / MOCK：DEV-M1-05 启动与实现前证据 | [控制权启动](records/AR-0016-control-authority-start.md) |
+| AR-0017 | 2026-11-23 | UNIT / MOCK＋DOC：首轮控制权通过、时钟故障结果约束复核失败 | [控制权首轮复核](records/AR-0017-control-authority-final.md) |
+| AR-0018 | 2026-11-23 | UNIT / MOCK＋DOC：控制权结果约束修正与最终工程复验 | [控制权最终复验](records/AR-0018-control-authority-invariant-final.md) |
+| AR-0019 | 2026-11-23 | DOC 通过；整分支公开结果约束复核失败 | [控制权整分支复核](records/AR-0019-control-authority-docs-final.md) |
+| AR-0020 | 2026-11-23 | UNIT / MOCK＋DOC：永久状态 / 租约结果约束修正与最终交付 | [控制权最终交付](records/AR-0020-control-authority-final.md) |
 
 ## 5. 每轮记录模板
 
