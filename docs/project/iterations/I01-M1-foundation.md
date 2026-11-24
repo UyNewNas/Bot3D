@@ -67,4 +67,4 @@
 
 G-I01 出口：四个工作包交付及针对性检查有记录；十个切片全部通过；DOC 设计评审的阻断问题已处置；运行说明、版本、已知限制完整；指定验收角色独立判定。缺少验收者时产品验收保持 PENDING，迭代不 CLOSED。失败保留 DEF，修复新增 AR；范围 / 契约变化走 CHG。
 
-DEV-M1-01—04 均已交付，十个技术切片通过，I01 为 IN_ACCEPTANCE；G-I01 验收 PENDING，G-M1 未关闭。I02 在后续轮次锁定租约、状态投影和 mock 执行 / 停止范围，再从 DEV-M1-05 进入实现。
+DEV-M1-01—04 均已交付，十个技术切片通过，I01 为 IN_ACCEPTANCE；G-I01 验收 PENDING，G-M1 未关闭。[I02](I02-M1-control-loop.md) 已锁定租约、状态投影和 mock 执行 / 停止范围，从 DEV-M1-05 继续；启动记录见 [AR-0016](../records/AR-0016-control-authority-start.md)。

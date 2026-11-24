@@ -24,6 +24,14 @@ where = ["src"]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
 markers = [
+  "t02_digest: normalized command identity and equivalent execution semantics",
+  "t03_conflict: every execution field and invalid command inputs",
+  "t02_journal: atomic command history, retries and ordered facts",
+  "t18_journal_fault: journal storage uncertainty and failed writes",
+  "t01_leases: scoped and exclusive control leases",
+  "t07_authority_loss: immutable loss effects and unresolved execution holds",
+  "t30_activation: evidence policy and explicit control activation",
+  "t42_lease_clock: monotonic expiry and clock failure",
   "t26_package: installed package and minimal distribution checks",
   "t26_imports: core dependency boundaries and their negative controls",
   "t26_ports_clock: ordinary domain time values, clock port, and deterministic clocks",
