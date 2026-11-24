@@ -65,4 +65,4 @@
 - [x] Build sdist→wheel and verify empty offline consumer, all 19 framework files agree across source / installed / sdist / wheel, zero runtime dependencies and current README metadata.
 - [x] Run existing documentation, runtime-design and import checks; `git diff --check` PASS; 47 Markdown documents, 44 DOC scenarios and 15 core modules verified.
 - [x] Obtain independent whole-branch review; 3 Important findings reproduced with 12 failing tests and 2 passing controls, then fixed with 493-test full regression. Long-history append performance remains a documented Minor.
-- [ ] Mark completed work accurately and create the next feature PR against master, preserving the existing delivery convention. Since #3 is open, declare the dependency and provide the DEV-M1-06-only comparison from e653eea. Do not merge either PR.
+- [x] Mark completed work accurately and create [PR #4](https://github.com/UyNewNas/Bot3D/pull/4) against master. The PR declares its dependency on open PR #3 and links the DEV-M1-06-only comparison from e653eea. Neither PR was merged.

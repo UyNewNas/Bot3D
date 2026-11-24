@@ -78,4 +78,4 @@ git diff --check
 
 技术出口已通过，DEV-M1-06 为 DONE，REQ-009 保持 DEVELOPING。复用既有 DEV-M1-04 身份类型，台账前置补充 04，不复制另一套绑定模型；不依赖控制权管理器执行。I02 ACTIVE、I01 IN_ACCEPTANCE、产品验收 PENDING。后续先推进 DEV-M1-12 状态投影，再推进 DEV-M1-07 可控 Planner / Backend mock，随后按依赖接协调与停止链。
 
-功能 PR 面向 master，明确依赖仍未合并的 PR #3；DEV-M1-06 的新增范围从 e653eea 比较。没有自动合并 PR、连接设备或发布运行服务。
+功能 [PR #4](https://github.com/UyNewNas/Bot3D/pull/4) 面向 master，明确依赖仍未合并的 PR #3；DEV-M1-06 的新增范围从 e653eea 比较。发布时以 Git tree SHA 核对远端与本地已验证内容完全一致。没有自动合并 PR、连接设备或发布运行服务。
