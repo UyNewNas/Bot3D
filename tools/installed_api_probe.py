@@ -8,13 +8,14 @@ from framework.adapters.memory_journal import InMemoryJournal
 from framework.application.control_authority import ControlAuthority
 from framework.application.ports import JournalPort, MonotonicClock
 from framework.application.registry import RobotRegistry
+from framework.application.state_projection import StateProjection
 from framework.domain.capabilities import CapabilityInputs, UnavailableReason, revise_capabilities
 from framework.domain.control import (
     ActivationEvidence, ArmingState, AuthorityDenial, AuthorityLossReason, ControlBinding,
     Readiness, SessionAuthorization,
 )
 from framework.domain.discovery import (
-    BackendDescription, BackendIdentity, BackendKind, BackendState, MotionState, ReadOnlyObservation,
+    BackendDescription, BackendIdentity, BackendKind, BackendState, JointObservation, MotionState, ReadOnlyObservation,
 )
 from framework.domain.geometry import Quaternion, RigidTransform
 from framework.domain.commands import (
@@ -23,6 +24,11 @@ from framework.domain.commands import (
 from framework.domain.journal import (
     BackendReceipt, CommandAcceptance, CommandEvent, CommandState, DispatchIntent,
     IdempotencyConflict, JournalEntry, ReconciliationFact, ResultCertainty,
+)
+from framework.domain.projection import (
+    ClockMapping, ControllerFeedback, DataOrigin, DataQuality, FeedbackSample,
+    ForwardKinematicsResult, JointFeedback, ProjectionConfig, ProjectionContext,
+    ProjectionDisposition, ProjectionTarget, ToolPose,
 )
 from framework.domain.targets import PoseGoal
 from framework.domain.time import ClockDomainMismatch, MonotonicInstant
@@ -128,5 +134,49 @@ for revision, payload in enumerate(payloads):
 assert current.state is CommandState.INTERRUPTED and current.certainty is ResultCertainty.UNKNOWN
 assert current.receipt.backend_handle == 'original-handle'
 assert current.intent.query_key == 'original-query' and current.revision == 8
+
+# Projected observations are separate from target display and command facts.
+# Every threshold here is an artificial fixture, never a device safety default.
+projection_context = ProjectionContext(1, 'model-1', 'scene-1', 'cal-1')
+projection_config = ProjectionConfig(
+    robot_id=robot, backend=backend, source_id='joint-feedback',
+    source_clock_id='source-clock', protection_clock_id='projection-clock',
+    joint_names=['j1'], frame_id=base, tool_id=tool, feedback_origin=DataOrigin.SIMULATED,
+    max_source_age_ns=30, max_receive_age_ns=20, max_clock_uncertainty_ns=2,
+    stationary_window_ns=10, max_sample_gap_ns=6,
+    max_velocity_rad_s=.01, max_position_delta_rad=.001,
+)
+projection = StateProjection(projection_config, projection_context)
+projection_clock = ManualMonotonicClock(clock_id='projection-clock')
+projection.set_mapping(ClockMapping(
+    'source-clock', 0, 0, projection_clock.now(), MonotonicInstant('projection-clock', 1000), 'sync-1',
+), now=projection_clock.now())
+target_state = projection.set_target(ProjectionTarget('probe-command', goal, projection_context),
+                                     now=projection_clock.now())
+assert target_state.tool_pose.value is None and target_state.motion_state is MotionState.UNKNOWN
+for source_seq in (1, 2, 3):
+    sample = FeedbackSample(
+        robot, backend, projection_context, 'joint-feedback', source_seq,
+        MonotonicInstant('source-clock', projection_clock.now().tick_ns), projection_clock.now(),
+        JointFeedback([JointObservation('j1', 0, 0)], DataOrigin.SIMULATED), None,
+        ControllerFeedback(MotionState.STOPPED, 'automatic', False, None, DataOrigin.SIMULATED),
+    )
+    projected = projection.ingest(sample, now=projection_clock.now()).state
+    if source_seq < 3:
+        assert projected.stationary is None
+        projection_clock.advance_ns(5)
+assert projected.motion_state is MotionState.STOPPED and projected.stationary.end_seq == 3
+assert projected.controller.value.protective_stop_active is None
+fk = ForwardKinematicsResult(robot, backend, projection_context, 'joint-feedback', 3,
+                             ToolPose(base, tool, Vector3(1, 0, 0), identity))
+assert projection.apply_fk(fk, now=projection_clock.now())
+assert projection.snapshot(now=projection_clock.now()).tool_pose.origin is DataOrigin.DERIVED
+projection_clock.advance_ns(20)
+duplicate = projection.ingest(replace(sample, received_at=projection_clock.now()), now=projection_clock.now())
+assert duplicate.disposition is ProjectionDisposition.DUPLICATE
+assert duplicate.state.source_age_ns == duplicate.state.receive_age_ns == 20
+assert duplicate.state.transport_age_ns == 0
+assert duplicate.state.joints.quality is DataQuality.STALE and duplicate.state.stationary is None
+assert duplicate.state.motion_state is MotionState.UNKNOWN
 assert written.record.state is None and written.record.revision == 0
 assert journal.record_acceptance(candidate).record == current

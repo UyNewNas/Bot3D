@@ -33,6 +33,7 @@ print('PASS: typed goal and framed transform work in the clean consumer.')
 print('PASS: read-only registry preserves mock identity and unknown feedback.')
 print('PASS: a synthetic session acquires, activates, and expires within its scoped authority.')
 print('PASS: command retries retain original journal facts and immutable UNKNOWN terminal history.')
+print('PASS: state projection separates targets, derived poses and fresh stationary evidence; duplicate receipts do not renew it.')
 print('INFO: consumer Python ' + platform.python_version() + '; no device connection.')
 '''
 

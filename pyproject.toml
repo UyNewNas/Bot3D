@@ -24,6 +24,10 @@ where = ["src"]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
 markers = [
+  "t06_projection: distinct actual/target/plan, per-class quality and provenance",
+  "t06_order: source ordering, duplicates and immutable projection snapshots",
+  "t42_feedback_clock: conservative source mapping and independent feedback ages",
+  "t10_stationary: trusted fresh feedback and a complete stationary window",
   "t02_digest: normalized command identity and equivalent execution semantics",
   "t03_conflict: every execution field and invalid command inputs",
   "t02_journal: atomic command history, retries and ordered facts",

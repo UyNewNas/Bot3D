@@ -3,9 +3,9 @@
 - 建立日期：2026-11-23
 - 迭代状态：ACTIVE
 - 闸门：G-I02
-- 基线：I01 四个工作包技术切片可用，PR #2 已合并为 ffae464；本工作包接续 DEV-M1-05 PR #3 的 e653eea。I01 仍 IN_ACCEPTANCE，产品验收 PENDING。本轮继续离线开发，不代替产品签收。
-- 本次执行：DEV-M1-06；开始条件和基线见 [AR-0021](../records/AR-0021-command-journal-start.md)
-- 当前结果：DEV-M1-05 控制权切片通过，见 [AR-0020](../records/AR-0020-control-authority-final.md)；DEV-M1-06 四个命令日志切片与全量 493 项测试通过，见 [AR-0022](../records/AR-0022-command-journal-final.md)。下一工作包为 DEV-M1-12，再为 DEV-M1-07，完整执行 / STOP 链仍待实现
+- 基线：I01 四个工作包技术切片可用，PR #2 已合并为 ffae464；本工作包接续 DEV-M1-06 PR #4 的 b4f3802。I01 仍 IN_ACCEPTANCE，产品验收 PENDING。本轮继续离线开发，不代替产品签收。
+- 本次执行：DEV-M1-12；开始条件和基线见 [AR-0023](../records/AR-0023-state-projection-start.md)
+- 当前结果：DEV-M1-05 控制权与 DEV-M1-06 命令日志切片分别见 [AR-0020](../records/AR-0020-control-authority-final.md)、[AR-0022](../records/AR-0022-command-journal-final.md)；DEV-M1-12 已交付状态投影、时间质量与静止证据，精确测试与最终检查结果见 [AR-0024](../records/AR-0024-state-projection-final.md)。下一工作包为 DEV-M1-07，完整执行 / STOP 链与 T27 完成判断仍待实现
 - 权威状态：[开发台账](../backlog.md)；需求映射只见[追踪矩阵](../requirements.md)
 - 执行角色：开发助手；契约 / 代码由独立助手复核；产品验收角色未指定
 
@@ -17,12 +17,12 @@ I02 选择 DEV-M1-05—DEV-M1-09 和 DEV-M1-12，建立可确定性验证的控�
 | --- | --- | --- |
 | DEV-M1-05 | 单写租约、显式激活、前置策略、失权交接与未结执行门禁 | 已交付；只返回停止用例的输入，无外部控制调用 |
 | DEV-M1-06 | 规范化摘要、JournalPort 与内存替身 | 已交付；复用 03 的目标 / 数值和 04 的身份 / 能力校验，不依赖 05 控制权管理器；不声称持久化 |
-| DEV-M1-12 | StateProjection、时间 / 来源 / 质量和顺序规则 | 先于执行 / 停止链使用可信状态；不得用默认零或 STOPPED 填未知 |
+| DEV-M1-12 | StateProjection、时间 / 来源 / 质量、顺序规则与静止证据 | 已交付；先于执行 / 停止链使用可信状态，未知不填默认零或 STOPPED；不独立裁决命令完成 |
 | DEV-M1-07 | 可控 Planner / Backend mock、原句柄查询与绑定停止 | 依赖 04 / 06；零外部设备连接 |
 | DEV-M1-08 | 串行协调正常链、任务槽、最终下发裁决与完成 | 依赖 05 / 06 / 07 / 12；停止链未联调前不关闭执行切片 |
 | DEV-M1-09 | 取消 / STOP / 超时、失权处理、未知执行与停止闭环 | 依赖 08；T31 所有关键交错需可控屏障证据 |
 
-本迭代已交付 [DEV-M1-05](../../design/09-control-authority-and-activation.md) 与 [DEV-M1-06](../../design/10-command-journal-and-idempotency.md) 的设计和实现。05 / 06 之后依次推进 12、07、08、09；06 提供 07 所需的命令 / 日志基础，12 提供后续执行与停止判断所需的状态。每个工作包在实现前补充精确接口、fixture、命令和当轮 AR。本文件锁定完整迭代最低主题，不把后续尚未编写或未运行的测试计为通过。
+本迭代已交付 [DEV-M1-05](../../design/09-control-authority-and-activation.md)、[DEV-M1-06](../../design/10-command-journal-and-idempotency.md) 与 [DEV-M1-12](../../design/11-state-projection.md) 的设计和实现。下一步依次推进 07、08、09；06 提供 07 所需的命令 / 日志基础，12 提供后续执行与停止判断所需的状态。每个工作包在实现前补充精确接口、fixture、命令和当轮 AR。本文件锁定完整迭代最低主题，不把后续尚未编写或未运行的测试计为通过。
 
 ## 2. 已锁定数据与实现切片
 
@@ -37,7 +37,7 @@ I02 选择 DEV-M1-05—DEV-M1-09 和 DEV-M1-12，建立可确定性验证的控�
 | T30/activation | READY / lease / ARMED / motion 分离，明确确认与全部前提，健康自身运动可续租；能力上下文变化退役旧绑定，旧证据不能复活 |
 | T42/lease-clock | 半开到期、范围校验、独立源钟、时钟失效保守撤权与保护入口仍可调用 |
 
-该工作包只验证控制权部分；T07 的实际 STOP、T30 的完整命令超时联动、T42 的命令期限 / 执行预算未由该工作包完成。未知反馈继续明确未知，后续完整 StateProjection 单独验证。
+该工作包只验证控制权部分；T07 的实际 STOP、T30 的完整命令超时联动、T42 的命令期限 / 执行预算未由该工作包完成。未知反馈继续明确未知，StateProjection 的状态证据由 DEV-M1-12 单独验证，接入控制与停止链仍待后续工作包。
 
 ### DEV-M1-06：命令摘要与内存 Journal
 
@@ -52,9 +52,22 @@ I02 选择 DEV-M1-05—DEV-M1-09 和 DEV-M1-12，建立可确定性验证的控�
 
 当前切片不连接控制权管理器或外部执行者。日志内部顺序不替代协调器的实际接受 / 最后下发裁决；T18 的拒新运动与 STOP 独立通路仍由 08 / 09 / 16 联调，SQLite 与跨进程恢复留 I03。
 
+### DEV-M1-12：状态投影、时间质量与静止证据
+
+人工 fixture 使用 control-clock / source-clock，offset=0 ns、uncertainty=0 ns，映射有效窗口为 `[0, 1000)`；source / receive 最大年龄 30 / 20 ns，允许不确定度 2 ns。两个命名关节使用 SIMULATED 来源；静止窗口 10 ns、最大采样间隙 6 ns、速度阈值 0.01 rad/s、全窗口位移阈值 0.001 rad。上述参数只用于边界复现，不是设备安全默认值。
+
+| 当前切片 | 必须证据 |
+| --- | --- |
+| T06/projection | 目标 / 计划 / 实际分离、每类数据来源与未知值；绑定 / 上下文、关节、工具 / frame 验证；FK 标 DERIVED 并保留原采样与接收时刻，旧快照不可变 |
+| T06/order | 乱序不覆盖，重复只更新 transport 而不续鲜；冲突、源回退与换钟有确定质量；相同源时间与跳号重建窗口，state_seq 不因纯年龄增长而增加 |
+| T42/feedback-clock | 双年龄、半开截止、偏移 / 不确定度、映射缺失 / 变化 / 过期、未来样本、保护钟换域 / 回退与原接收时刻校验 |
+| T10/stationary | 单包 / 重复 / 轮询不构成静止窗口；可信新鲜关节与控制器、连续序号 / 时间、采样间隙、速度 / 全窗位移、缺失 / 陈旧 / 失步清窗；not_before 区分新观察轮次 |
+
+状态投影只提供带时间、绑定和上下文的证据，不调用设备、不生成命令结果、不自动激活。完整 STOP、执行锁、T27 成功判断及旧执行者失效不能由当前 STOPPED 快照替代；T42 的命令期限 / 执行预算仍由 08 / 09 验证。本轮启动与最终记录见 [AR-0023](../records/AR-0023-state-projection-start.md)、[AR-0024](../records/AR-0024-state-projection-final.md)。
+
 ## 3. I02 最低验收清单
 
-依据 [G-I02](../acceptance.md)，以下主题全部闭合才进入迭代验收。控制权和命令日志的实际结果分别查对应 AR；其余未覆盖的子场景均为 NOT_RUN。
+依据 [G-I02](../acceptance.md)，以下主题全部闭合才进入迭代验收。控制权、命令日志和状态投影的实际结果分别查对应 AR；其余未覆盖的子场景均为 NOT_RUN。
 
 | 测试主题 | 必验范围 / 工作包 |
 | --- | --- |

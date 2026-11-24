@@ -78,6 +78,8 @@ M4 准入先只读，运动和故障试验再分步批准；本地停车链无�
 | AR-0020 | 2026-11-23 | UNIT / MOCK＋DOC：永久状态 / 租约结果约束修正与最终交付 | [控制权最终交付](records/AR-0020-control-authority-final.md) |
 | AR-0021 | 2026-11-24 | UNIT / MOCK：DEV-M1-06 基线与摘要实现前 / 后证据 | [命令日志启动](records/AR-0021-command-journal-start.md) |
 | AR-0022 | 2026-11-24 | UNIT / MOCK＋DOC：DEV-M1-06 日志、故障、独立复核与交付检查 | [命令日志最终复验](records/AR-0022-command-journal-final.md) |
+| AR-0023 | 2026-11-24 | UNIT / MOCK：DEV-M1-12 固定环境、安装来源与基线检查 | [状态投影启动](records/AR-0023-state-projection-start.md) |
+| AR-0024 | 2026-11-24 | UNIT / MOCK＋DOC：DEV-M1-12 状态投影、时间质量、静止证据与最终交付检查 | [状态投影最终复验](records/AR-0024-state-projection-final.md) |
 
 ## 5. 每轮记录模板
 

@@ -2,7 +2,7 @@
 
 - 更新日期：2026-11-24
 - 基线：v0.1 设计草案；本台账把设计转为待实现、待验证的需求，不表示用户已逐项签收
-- 当前状态：10 项 READY、11 项 DEVELOPING、13 项 DRAFT、2 项 DEFERRED；没有 ACCEPTED 项
+- 当前状态：9 项 READY、12 项 DEVELOPING、13 项 DRAFT、2 项 DEFERRED；没有 ACCEPTED 项
 - 流程与状态：[项目入口](README.md)；开发状态见[开发台账](backlog.md)，实际结果只见[验收记录](acceptance.md)
 
 ## 1. 读法与范围
@@ -30,7 +30,7 @@
 | REQ-011 | P0 | READY | 生命周期与结果确定性 | AC-011：使用现有命令状态与 PENDING／CONFIRMED／UNKNOWN；成功需后端完成、新鲜目标反馈及停车判据；FAILED、TIMED_OUT、INTERRUPTED 不自动释放物理执行锁；无反馈不填成功或默认停车 | C §6、§8 |
 | REQ-012 | P0 | READY | 取消与绑定级 STOP | AC-012：取消引用原命令；STOP 通过独立权限和明确绑定定位，即使未知运动命令 ID 仍可请求；STOP 撤租并 DISARMED，不被普通队列或日志故障阻塞；请求回执不等于停车；旧 epoch 的 STOP 不改指新设备 | A §4.2；C §7、§8、§11 |
 | REQ-013 | P0 | DEVELOPING | 崩溃恢复与未知结果对账 | AC-013：受理响应丢失先查原句柄，不盲目 submit；重启新 epoch、撤销旧会话租约并 DISARMED；不重放任务；历史结果未知、当前停车和旧执行者是否仍有效分别处置，解锁依据可审计，不改写历史成功 | A §6、§8；C §8、§9 |
-| REQ-014 | P0 | READY | 实际状态与质量投影 | AC-014：分开目标、计划与实际；保留源／接收时间、clock_id、序号、来源及质量；缺失明确未知，乱序或持续收包不冒充新鲜；FK 位姿标 DERIVED；STOPPED 使用配置的可信反馈与静止窗口 | A §3、§4；C §6、§9 |
+| REQ-014 | P0 | DEVELOPING | 实际状态与质量投影 | AC-014：分开目标、计划与实际；保留源／接收时间、clock_id、序号、来源及质量，源 / 接收年龄分别判定；缺失明确未知，乱序不覆盖、重复或持续收包不延长原实际数据有效期；FK 位姿标 DERIVED 并沿用原关节采样时间；STOPPED 使用配置的可信新鲜反馈与连续静止窗口 | A §3、§4；C §6、§9 |
 | REQ-015 | P0 | READY | 资产、工具与上下文版本 | AC-015：RobotModelPackage、WorldPackage、CalibrationSet 有可追踪清单、工具映射、许可与转换损失说明；变更模型、工具、场景或标定使旧计划失效；执行中不暗换轨迹，按策略停止并锁住新运动 | A §5；C §2、§5、§10 |
 | REQ-016 | P0 | DEVELOPING | 坐标语义与变换有效性 | AC-016：SI、右手系、xyzw、T_A_B 方向及时间明确；基准点、轴、姿态、逆变换和 q／-q 测试通过；变换包含来源、版本、时间与有效性；Unity 基变换及跟踪失效另在 XR 环境复验 | A §5；C §4 |
 | REQ-017 | P0 | READY | 受控后端切换 | AC-017：冻结新命令并确认旧后端停车后才撤租、结束绑定并换 epoch；目标先只读且 DISARMED；旧包失效；失败保持冻结或未激活，不自动回滚到旧可写设备，不用切换掩盖未知运动 | A §7；C §2、§7 |
@@ -80,7 +80,7 @@
 | REQ-011 | DEV-M1-08、DEV-M1-09、DEV-M1-11、DEV-M1-12 | T10、T11、T27、T34 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
 | REQ-012 | DEV-M1-07、DEV-M1-09、DEV-M1-16 | T07、T10、T18、T31、T33 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
 | REQ-013 | DEV-M1-01、DEV-M1-11 | T08、T09、T11、T34 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
-| REQ-014 | DEV-M1-12 | T06、T10、T14、T27 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
+| REQ-014 | DEV-M1-12 | T06、T10、T14、T27、T42 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
 | REQ-015 | DEV-M1-13、DEV-M2-01 | T14、T43 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
 | REQ-016 | DEV-M1-03、DEV-M1-13、DEV-M3-04 | T15、T28、T43 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
 | REQ-017 | DEV-M1-14 | T12、T13、T16、T34 | G-M1 | G-M2、G-M3、G-M4、G-M5 |
@@ -112,6 +112,8 @@ REQ-002、REQ-004 和 REQ-016 已获得基础标识、带工具目标 / 数值�
 
 REQ-003 已获得纯有效能力组合、版本与原因以及只读发现的 UNIT / MOCK 证据，见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。状态保持 DEVELOPING；配置与执行链的实际准入、后续阶段的能力变化仍须按矩阵验证。
 
-REQ-005 / REQ-006 已获得 DEV-M1-05 的 UNIT / MOCK 证据：会话租约、单写竞争、显式激活、失权交接、上下文退役与聚合执行门禁，见 [AR-0020](records/AR-0020-control-authority-final.md)。两项保持 DEVELOPING；实际停止联动、状态投影与完整执行闭环仍按后续任务验证。
+REQ-005 / REQ-006 已获得 DEV-M1-05 的 UNIT / MOCK 证据：会话租约、单写竞争、显式激活、失权交接、上下文退役与聚合执行门禁，见 [AR-0020](records/AR-0020-control-authority-final.md)。两项保持 DEVELOPING；实际停止联动、投影证据接入与完整执行闭环仍按后续任务验证。
 
 REQ-009 进入 DEVELOPING。DEV-M1-06 已实现执行摘要、同键重试 / 冲突、候选与公开接受分离、不可变追加事实、原绑定 / 句柄、终态保留，以及内存故障和实例保留边界；启动与最终证据见 [AR-0021](records/AR-0021-command-journal-start.md)、[AR-0022](records/AR-0022-command-journal-final.md)。协调器实际接受 / 下发排序和日志故障下的停止联动仍待 I02 后续工作包；SQLite 事务、持久保留和跨进程恢复由 I03 验证，不能用内存日志关闭整个 AC-009。
+
+REQ-014 进入 DEVELOPING。DEV-M1-12 提供目标 / 计划 / 实际分离、反馈顺序、每类数据来源与质量、源 / 接收双年龄、显式时钟映射、DERIVED FK 和连续静止窗口的 UNIT / MOCK 证据；启动与最终结果见 [AR-0023](records/AR-0023-state-projection-start.md)、[AR-0024](records/AR-0024-state-projection-final.md)。本轮只覆盖 T06/projection、T06/order、T42/feedback-clock 与 T10/stationary 的状态证据部分；上下文失效后的协调动作、完整 STOP、T27 命令完成与后续环境复验仍按矩阵验证。投影快照不证明旧执行者失效，也不关闭整个 AC-014。

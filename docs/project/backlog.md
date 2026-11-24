@@ -1,9 +1,9 @@
 # 开发台账
 
 - 更新日期：2026-11-24
-- 当前状态：12 项 TODO、6 项 DONE、13 项 DRAFT、2 项 DEFERRED
+- 当前状态：11 项 TODO、7 项 DONE、13 项 DRAFT、2 项 DEFERRED
 - 权威范围：本文件维护开发交付物、依赖和开发状态；需求与测试映射只维护在[追踪矩阵](requirements.md)
-- 当前选择：[I02](iterations/I02-M1-control-loop.md)；DEV-M1-06 命令摘要与内存 Journal 已完成，最终记录见 [AR-0022](records/AR-0022-command-journal-final.md)；下一工作包为 DEV-M1-12，再为 DEV-M1-07。[I01](iterations/I01-M1-foundation.md) 仍 IN_ACCEPTANCE，产品验收 PENDING
+- 当前选择：[I02](iterations/I02-M1-control-loop.md)；DEV-M1-12 状态投影、时间质量与静止证据已完成，最终记录见 [AR-0024](records/AR-0024-state-projection-final.md)；下一工作包为 DEV-M1-07。[I01](iterations/I01-M1-foundation.md) 仍 IN_ACCEPTANCE，产品验收 PENDING
 
 ## 1. 使用规则
 
@@ -16,6 +16,8 @@ DONE 的共同条件：交付物存在、针对性检查或测试有实际记录
 ## 2. M1：可执行任务
 
 M1 不依赖 ROS、Gazebo、Unity 或厂商 SDK。普通领域类型与端口保持技术无关；只建立当期必要工程，不生成整棵架构空壳。内存 Journal 是测试替身，不能代替 M1 的 SQLite 持久化交付。
+
+M1 当前为 7 项 DONE、11 项 TODO；完成范围以各行交付物与对应 AR 为准。
 
 DEV-M1-06 复用 DEV-M1-03 的目标 / 数值类型，以及 DEV-M1-04 的 BackendIdentity、能力版本与标识校验；不依赖 DEV-M1-05 的控制权管理器，也不从日志写入推导运动许可。
 
@@ -32,7 +34,7 @@ DEV-M1-06 复用 DEV-M1-03 的目标 / 数值类型，以及 DEV-M1-04 的 Backe
 | DEV-M1-09 | TODO | 实现取消、STOP、到期 / 超时、撤租与物理锁；落实 DEV-M1-01 的最后下发排序，撤销尚未越界的任务，已受理或未知时停止并对账；用可控屏障覆盖 T31，不依靠睡眠碰运气；无停车证据不得解锁 | DEV-M1-08 |
 | DEV-M1-10 | TODO | 实现 SQLite 日志，锁定接受 / 意图 / 句柄 / 事件 / 终态事务、同步策略、存储假设与幂等保留；提供迁移和损坏 / 满盘处理说明；实际进程崩溃与异常注入分开验证，不宣称已证明断电可靠性或设备 exactly-once | DEV-M1-06、DEV-M1-08、DEV-M1-09 |
 | DEV-M1-11 | TODO | 实现启动恢复与原句柄对账：新 epoch、撤旧租约、DISARMED、不重放；分别处理历史结果、当前停车、旧执行者失效；明确可审计解锁条件并保留原 UNKNOWN 历史；覆盖接受与外部受理之间的各崩溃点 | DEV-M1-09、DEV-M1-10、DEV-M1-12 |
-| DEV-M1-12 | TODO | 实现 StateProjection、源 / 接收时间、序号、来源与质量；目标 / 计划 / 实际分离；乱序、重复、延迟与不同 clock_id 有确定规则；配置并验证静止窗口和反馈新鲜度，FK 标 DERIVED | DEV-M1-04 |
+| DEV-M1-12 | DONE | 已交付[状态投影、时间质量与静止证据](../design/11-state-projection.md)：目标 / 计划 / 实际分离，来源与 per-class 质量，源 / 接收双年龄及有界时钟映射；乱序不覆盖、重复不续鲜、冲突 / 回退锁定；可信关节与控制器反馈构成连续静止窗口，FK 标 DERIVED 且不刷新原时间。最终证据见 [AR-0024](records/AR-0024-state-projection-final.md)；不关闭完整 STOP 或命令完成链 | DEV-M1-04 |
 | DEV-M1-13 | TODO | 实现三类资产清单、工具映射与坐标 / 标定快照；版本、来源、有效性、许可和转换损失可追踪；模型 / 场景 / 工具 / 标定变化使旧计划失效，执行中按策略停止，不暗换轨迹 | DEV-M1-03、DEV-M1-04、DEV-M1-09 |
 | DEV-M1-14 | TODO | 实现受控绑定切换：冻结、旧后端停止确认、撤租、新 epoch、目标只读 DISARMED；旧包 / 旧反馈失效；任何失败保持冻结 / 未激活，不自动回滚为旧可写绑定 | DEV-M1-11、DEV-M1-13 |
 | DEV-M1-15 | TODO | 实现同一协调序列生成的快照与游标、独立 state_seq / event_seq、关键事件保留及 RESYNC_REQUIRED；内存消费者重连只查询，不重放输入；真实 WS 留待 M3 | DEV-M1-11、DEV-M1-12 |
@@ -72,4 +74,4 @@ DEV-M1-06 复用 DEV-M1-03 的目标 / 数值类型，以及 DEV-M1-04 的 Backe
 
 ## 4. 本轮交接
 
-DEV-M1-01 的详细设计与 DOC 检查见 [AR-0003](records/AR-0003-runtime-design.md)。DEV-M1-02 的依赖边界修正见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md)。DEV-M1-03 基础类型见 [AR-0011](records/AR-0011-domain-foundation-final.md)，DEV-M1-04 的能力组合与只读发现见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。DEV-M1-05 控制权已完成，十四个累计切片与工程回归见 [AR-0020](records/AR-0020-control-authority-final.md)。DEV-M1-06 命令摘要与内存日志已完成，启动记录见 [AR-0021](records/AR-0021-command-journal-start.md)，最终证据见 [AR-0022](records/AR-0022-command-journal-final.md)。I01 为 IN_ACCEPTANCE，I02 ACTIVE，产品验收 PENDING；下一工作包为 DEV-M1-12，再为 DEV-M1-07，完整 mock 执行 / STOP 链仍待联调。
+DEV-M1-01 的详细设计与 DOC 检查见 [AR-0003](records/AR-0003-runtime-design.md)。DEV-M1-02 的依赖边界修正见 [AR-0007](records/AR-0007-foundation-boundary-recheck.md)。DEV-M1-03 基础类型见 [AR-0011](records/AR-0011-domain-foundation-final.md)，DEV-M1-04 的能力组合与只读发现见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。DEV-M1-05 控制权已完成，十四个累计切片与工程回归见 [AR-0020](records/AR-0020-control-authority-final.md)。DEV-M1-06 命令摘要与内存日志已完成，启动记录见 [AR-0021](records/AR-0021-command-journal-start.md)，最终证据见 [AR-0022](records/AR-0022-command-journal-final.md)。DEV-M1-12 状态投影已完成，启动见 [AR-0023](records/AR-0023-state-projection-start.md)，最终证据见 [AR-0024](records/AR-0024-state-projection-final.md)。I01 为 IN_ACCEPTANCE，I02 ACTIVE，产品验收 PENDING；下一工作包为 DEV-M1-07，完整 mock 执行 / STOP 链与 T27 完成判断仍待联调。
