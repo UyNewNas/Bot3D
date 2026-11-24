@@ -80,4 +80,6 @@ git diff --check
 
 工程出口已通过，DEV-M1-12 为 DONE，REQ-014 为 DEVELOPING；I02 ACTIVE、I01 IN_ACCEPTANCE、产品验收 PENDING。本轮只完成 T06、T10/stationary、T42/feedback-clock 的状态证据切片，不关闭物理 STOP、执行解锁、命令预算或 T27 完成。
 
-下一工作包是 DEV-M1-07 可控 Planner / Backend mock，再按依赖接 DEV-M1-08 / 09 协调与停止链。本分支交付延续面向 master 的 PR 流程，明确依赖 PR #4 和前序控制权分支；不自动合并、不连接设备、不发布运行服务。
+下一工作包是 DEV-M1-07 可控 Planner / Backend mock，再按依赖接 DEV-M1-08 / 09 协调与停止链。
+
+已创建功能 [PR #5](https://github.com/UyNewNas/Bot3D/pull/5)，面向 master，明确依赖仍未合并的 PR #4 及其前序控制权分支。本工作包独立差异从 b4f3802 比较；功能提交为 `3dbd142a5af51dea7711f69a76a32178eb901829`。发布时远端 Git tree SHA 与本地已验证内容完全一致；后续交付记录提交仅补充 PR 链接。未自动合并、连接设备或发布运行服务。
