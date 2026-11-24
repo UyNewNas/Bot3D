@@ -1,8 +1,8 @@
 # 需求与追踪矩阵
 
-- 更新日期：2026-11-23
+- 更新日期：2026-11-24
 - 基线：v0.1 设计草案；本台账把设计转为待实现、待验证的需求，不表示用户已逐项签收
-- 当前状态：11 项 READY、10 项 DEVELOPING、13 项 DRAFT、2 项 DEFERRED；没有 ACCEPTED 项
+- 当前状态：10 项 READY、11 项 DEVELOPING、13 项 DRAFT、2 项 DEFERRED；没有 ACCEPTED 项
 - 流程与状态：[项目入口](README.md)；开发状态见[开发台账](backlog.md)，实际结果只见[验收记录](acceptance.md)
 
 ## 1. 读法与范围
@@ -25,7 +25,7 @@
 | REQ-006 | P0 | DEVELOPING | 显式激活 | AC-006：READY、持有租约、ARMED 与物理运动状态分开；启动和新绑定默认 DISARMED；激活检查前提；STOP、失租约、超时及关键故障取消激活；停车确认或重连不自动激活 | C §6、§7 |
 | REQ-007 | P0 | DEVELOPING | 期限与保护时钟 | AC-007：校验 clock_id、接受期限、下发期限、执行预算与允许跨度；不从接收时重置目标寿命；仿真暂停不暂停租约或超时；源时钟不确定按能力拒绝新运动，授权 STOP 不依赖同步成功 | C §4、§9 |
 | REQ-008 | P0 | READY | 单机器人串行协调 | AC-008：每机器人状态转换串行；一个离散任务槽，规划也占槽，无隐式运动队列；业务终态和未解决物理执行锁分开；阻塞外部调用不直接修改领域状态 | A §6；C §8 |
-| REQ-009 | P0 | READY | 幂等与命令日志 | AC-009：robot_id＋command_id 为键，摘要包含全部执行语义但不含 request_id；同键同摘要返回原记录、异摘要冲突；接受记录先于 ACCEPTED，下发意图先于外部调用；保存句柄、事件与终态，明示保留期、事务及存储假设，不承诺跨设备 exactly-once | A §6；C §8、§10 |
+| REQ-009 | P0 | DEVELOPING | 幂等与命令日志 | AC-009：robot_id＋command_id 为键，摘要包含全部执行语义但不含 request_id；同键同摘要返回原记录、异摘要冲突；接受记录先于 ACCEPTED，下发意图先于外部调用；保存句柄、事件与终态，明示保留期、事务及存储假设，不承诺跨设备 exactly-once | A §6；C §8、§10 |
 | REQ-010 | P0 | DEVELOPING | 规划与唯一执行链 | AC-010：Planner 只返回计划；只有服务端解析的执行请求可下发；校验起点与版本；明确最后下发边界及其与 STOP 的排序，旧规划和撤销的待下发任务不得越过边界；MoveIt 与底层 Action 不同时执行 | A §4；C §5、§8、§10 |
 | REQ-011 | P0 | READY | 生命周期与结果确定性 | AC-011：使用现有命令状态与 PENDING／CONFIRMED／UNKNOWN；成功需后端完成、新鲜目标反馈及停车判据；FAILED、TIMED_OUT、INTERRUPTED 不自动释放物理执行锁；无反馈不填成功或默认停车 | C §6、§8 |
 | REQ-012 | P0 | READY | 取消与绑定级 STOP | AC-012：取消引用原命令；STOP 通过独立权限和明确绑定定位，即使未知运动命令 ID 仍可请求；STOP 撤租并 DISARMED，不被普通队列或日志故障阻塞；请求回执不等于停车；旧 epoch 的 STOP 不改指新设备 | A §4.2；C §7、§8、§11 |
@@ -113,3 +113,5 @@ REQ-002、REQ-004 和 REQ-016 已获得基础标识、带工具目标 / 数值�
 REQ-003 已获得纯有效能力组合、版本与原因以及只读发现的 UNIT / MOCK 证据，见 [AR-0015](records/AR-0015-readonly-registry-batch-final.md)。状态保持 DEVELOPING；配置与执行链的实际准入、后续阶段的能力变化仍须按矩阵验证。
 
 REQ-005 / REQ-006 已获得 DEV-M1-05 的 UNIT / MOCK 证据：会话租约、单写竞争、显式激活、失权交接、上下文退役与聚合执行门禁，见 [AR-0020](records/AR-0020-control-authority-final.md)。两项保持 DEVELOPING；实际停止联动、状态投影与完整执行闭环仍按后续任务验证。
+
+REQ-009 进入 DEVELOPING。DEV-M1-06 已实现执行摘要、同键重试 / 冲突、候选与公开接受分离、不可变追加事实、原绑定 / 句柄、终态保留，以及内存故障和实例保留边界；启动与最终证据见 [AR-0021](records/AR-0021-command-journal-start.md)、[AR-0022](records/AR-0022-command-journal-final.md)。协调器实际接受 / 下发排序和日志故障下的停止联动仍待 I02 后续工作包；SQLite 事务、持久保留和跨进程恢复由 I03 验证，不能用内存日志关闭整个 AC-009。

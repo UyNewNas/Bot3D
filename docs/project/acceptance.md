@@ -1,6 +1,6 @@
 # 验收规则与闸门
 
-- 更新日期：2026-11-23
+- 更新日期：2026-11-24
 - 当前事实：产品验收全部 PENDING；没有产品闸门通过记录，没有指定现实验收者
 - 权威范围：本文件定义闸门、证据规则与记录索引；实际运行和判定只在对应 AR 保存
 - 关联：[需求与追踪矩阵](requirements.md)、[开发台账](backlog.md)、[测试计划](test-plan.md)
@@ -76,6 +76,8 @@ M4 准入先只读，运动和故障试验再分步批准；本地停车链无�
 | AR-0018 | 2026-11-23 | UNIT / MOCK＋DOC：控制权结果约束修正与最终工程复验 | [控制权最终复验](records/AR-0018-control-authority-invariant-final.md) |
 | AR-0019 | 2026-11-23 | DOC 通过；整分支公开结果约束复核失败 | [控制权整分支复核](records/AR-0019-control-authority-docs-final.md) |
 | AR-0020 | 2026-11-23 | UNIT / MOCK＋DOC：永久状态 / 租约结果约束修正与最终交付 | [控制权最终交付](records/AR-0020-control-authority-final.md) |
+| AR-0021 | 2026-11-24 | UNIT / MOCK：DEV-M1-06 基线与摘要实现前 / 后证据 | [命令日志启动](records/AR-0021-command-journal-start.md) |
+| AR-0022 | 2026-11-24 | UNIT / MOCK＋DOC：DEV-M1-06 日志、故障、独立复核与交付检查 | [命令日志最终复验](records/AR-0022-command-journal-final.md) |
 
 ## 5. 每轮记录模板
 

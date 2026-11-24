@@ -1,10 +1,12 @@
 """Exercise ordinary installed APIs in each caller's isolated consumer."""
+from dataclasses import replace
 import sys
 
 from framework.adapters.clocks import ManualMonotonicClock, SystemMonotonicClock
 from framework.adapters.mock_robot import ReadOnlyMockBackend
+from framework.adapters.memory_journal import InMemoryJournal
 from framework.application.control_authority import ControlAuthority
-from framework.application.ports import MonotonicClock
+from framework.application.ports import JournalPort, MonotonicClock
 from framework.application.registry import RobotRegistry
 from framework.domain.capabilities import CapabilityInputs, UnavailableReason, revise_capabilities
 from framework.domain.control import (
@@ -15,6 +17,13 @@ from framework.domain.discovery import (
     BackendDescription, BackendIdentity, BackendKind, BackendState, MotionState, ReadOnlyObservation,
 )
 from framework.domain.geometry import Quaternion, RigidTransform
+from framework.domain.commands import (
+    CommandContext, CommandKey, CommandTiming, PoseCommand, PoseConstraints,
+)
+from framework.domain.journal import (
+    BackendReceipt, CommandAcceptance, CommandEvent, CommandState, DispatchIntent,
+    IdempotencyConflict, JournalEntry, ReconciliationFact, ResultCertainty,
+)
 from framework.domain.targets import PoseGoal
 from framework.domain.time import ClockDomainMismatch, MonotonicInstant
 from framework.domain.values import DeviceId, FrameId, RobotId, ToolId, Vector3, mm_to_m
@@ -81,3 +90,43 @@ assert len(expired.losses) == 1
 assert expired.losses[0].reason is AuthorityLossReason.EXPIRED
 assert expired.losses[0].binding == binding and expired.losses[0].lease_id == grant.lease.lease_id
 assert authority.poll_expired() == ()
+
+# Journal facts are independent of an expired lease; an application authorizes
+# the reader first. These synthetic facts do not submit a robot operation.
+command = PoseCommand(
+    CommandKey(robot, '12345678-1234-5678-1234-567812345678'), 'probe-request',
+    backend.backend_epoch, grant.lease.lease_id, 1, goal,
+    CommandContext('model-1', 'scene-1', 'cal-1'),
+    CommandTiming('control-clock', 100, 200, 300), PoseConstraints(.1, .005, .05),
+)
+journal: JournalPort = InMemoryJournal()
+candidate = CommandAcceptance(command, backend, 'operator-a', protection_clock.now(), 'validation-1')
+written = journal.record_acceptance(candidate)
+assert written.created and written.record.state is None and not journal.retention.durable
+retry = journal.record_acceptance(replace(candidate, command=replace(command, request_id='retry')))
+assert not retry.created and retry.record == written.record
+try:
+    journal.record_acceptance(replace(candidate, command=replace(command, lease_id='different-lease')))
+except IdempotencyConflict:
+    pass
+else:
+    raise AssertionError('changed execution meaning overwrote the journal')
+
+payloads = (
+    CommandEvent(CommandState.ACCEPTED, ResultCertainty.PENDING, 'checks confirmed'),
+    CommandEvent(CommandState.PLANNING, ResultCertainty.PENDING, 'planning begun'),
+    DispatchIntent('attempt-1', 'a' * 64, 'original-query'),
+    CommandEvent(CommandState.DISPATCHING, ResultCertainty.PENDING, 'intent confirmed'),
+    BackendReceipt('attempt-1', 'original-handle'),
+    CommandEvent(CommandState.EXECUTING, ResultCertainty.PENDING, 'backend accepted'),
+    CommandEvent(CommandState.INTERRUPTED, ResultCertainty.UNKNOWN, 'feedback lost'),
+    ReconciliationFact('attempt-1', 'later-observation', 'original handle subsequently queried'),
+)
+for revision, payload in enumerate(payloads):
+    entry = JournalEntry(f'probe-entry-{revision}', MonotonicInstant('control-clock', 11 + revision), payload)
+    current = journal.append(command.key, entry, expected_revision=revision)
+assert current.state is CommandState.INTERRUPTED and current.certainty is ResultCertainty.UNKNOWN
+assert current.receipt.backend_handle == 'original-handle'
+assert current.intent.query_key == 'original-query' and current.revision == 8
+assert written.record.state is None and written.record.revision == 0
+assert journal.record_acceptance(candidate).record == current
